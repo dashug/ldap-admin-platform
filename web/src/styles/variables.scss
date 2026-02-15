@@ -1,0 +1,89 @@
+// ========== 2024+ 现代设计令牌 ==========
+// 主色：偏靛蓝，更沉稳
+$themePrimary: #4f46e5;
+$themePrimaryLight: #818cf8;
+$themePrimaryDark: #4338ca;
+$themeSuccess: #10b981;
+$themeWarning: #f59e0b;
+$themeDanger: #ef4444;
+$themeInfo: #64748b;
+
+// ========== 中性色（Slate 系） ==========
+$slate50: #f8fafc;
+$slate100: #f1f5f9;
+$slate200: #e2e8f0;
+$slate300: #cbd5e1;
+$slate400: #94a3b8;
+$slate500: #64748b;
+$slate600: #475569;
+$slate700: #334155;
+$slate800: #1e293b;
+$slate900: #0f172a;
+
+// ========== 字体 ==========
+$fontFamilyBase: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+$fontSizeBase: 14px;
+$fontSizeSmall: 13px;
+$fontSizeLarge: 16px;
+$fontWeightNormal: 400;
+$fontWeightMedium: 500;
+$fontWeightSemibold: 600;
+$fontWeightBold: 700;
+$lineHeightBase: 1.5;
+$letterSpacingTight: -0.02em;
+
+// ========== 布局 ==========
+$headerHeight: 60px;
+$sideBarWidth: 240px;
+$sidebarCollapseWidth: 72px;
+$contentBg: $slate50;
+$contentPadding: 24px;
+$cardRadius: 16px;
+$cardRadiusSm: 12px;
+$cardShadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+$cardShadowHover: 0 8px 24px rgba(0, 0, 0, 0.08);
+$borderColor: $slate200;
+$transitionBase: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+// ========== 侧栏（深色现代） ==========
+$menuText: $slate400;
+$menuActiveText: #fff;
+$subMenuActiveText: $slate200;
+
+$menuBg: $slate900;
+$menuHover: $slate800;
+$menuActiveBg: rgba($themePrimary, 0.2);
+$menuActiveBorder: $themePrimary;
+
+$subMenuBg: #0c1222;
+$subMenuHover: $slate800;
+
+// ========== 兼容旧变量名 ==========
+$blue: $slate700;
+$light-blue: $themePrimaryLight;
+$red: $themeDanger;
+$pink: #ec4899;
+$green: $themeSuccess;
+$tiffany: #06b6d4;
+$yellow: $themeWarning;
+$panGreen: $themeSuccess;
+
+// :export for JS
+:export {
+  themePrimary: $themePrimary;
+  themeSuccess: $themeSuccess;
+  themeWarning: $themeWarning;
+  themeDanger: $themeDanger;
+  themeInfo: $themeInfo;
+  fontFamilyBase: $fontFamilyBase;
+  fontSizeBase: $fontSizeBase;
+  headerHeight: $headerHeight;
+  menuText: $menuText;
+  menuActiveText: $menuActiveText;
+  subMenuActiveText: $subMenuActiveText;
+  menuBg: $menuBg;
+  menuHover: $menuHover;
+  subMenuBg: $subMenuBg;
+  subMenuHover: $subMenuHover;
+  sideBarWidth: $sideBarWidth;
+}

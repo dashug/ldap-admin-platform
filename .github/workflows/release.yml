@@ -1,0 +1,97 @@
+# 推送 tag（如 v1.0.0）时自动构建多平台二进制并创建 GitHub Release
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'   # 例如 v1.0.0、v1.0.1
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building $VERSION"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install frontend dependencies
+        run: cd web && npm ci
+
+      - name: Build frontend
+        run: |
+          cd web && npm run build:prod
+          rm -rf ../public/static/dist
+          cp -r dist ../public/static/
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build binaries
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          CGO_ENABLED: 0
+        run: |
+          mkdir -p dist
+          BINARY=go-ldap-admin
+          LDFLAGS="-X github.com/dashug/ldap-admin-platform/public/version.Version=${VERSION} \
+            -X github.com/dashug/ldap-admin-platform/public/version.GitCommit=${GITHUB_SHA::7} \
+            -X github.com/dashug/ldap-admin-platform/public/version.BuildTime=$(date -u '+%Y-%m-%d %H:%M:%S')"
+
+          GOOS=linux   GOARCH=amd64 go build -ldflags "$LDFLAGS" -o dist/${BINARY}_linux_amd64   main.go
+          GOOS=linux   GOARCH=arm64 go build -ldflags "$LDFLAGS" -o dist/${BINARY}_linux_arm64   main.go
+          GOOS=darwin  GOARCH=amd64 go build -ldflags "$LDFLAGS" -o dist/${BINARY}_darwin_amd64  main.go
+          GOOS=darwin  GOARCH=arm64 go build -ldflags "$LDFLAGS" -o dist/${BINARY}_darwin_arm64 main.go
+          GOOS=windows GOARCH=amd64 go build -ldflags "$LDFLAGS" -o dist/${BINARY}_windows_amd64.exe main.go
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: dist/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries
+
+      - name: Rename for release
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          mkdir -p release
+          for f in go-ldap-admin_*; do
+            mv "$f" "release/ldap-admin-platform_${VERSION}_${f#go-ldap-admin_}";
+          done
+          ls -la release/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          generate_release_notes: true
+          files: release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

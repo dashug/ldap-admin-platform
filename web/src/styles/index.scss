@@ -1,0 +1,214 @@
+@import './variables.scss';
+@import './mixin.scss';
+@import './transition.scss';
+@import './element-ui.scss';
+@import './sidebar.scss';
+@import './btn.scss';
+
+body {
+  height: 100%;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-family: $fontFamilyBase;
+  font-size: $fontSizeBase;
+  font-weight: $fontWeightNormal;
+  line-height: $lineHeightBase;
+  color: $slate800;
+  background: $contentBg;
+}
+
+label {
+  font-weight: 700;
+}
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+#app {
+  height: 100%;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+.no-padding {
+  padding: 0px !important;
+}
+
+.padding-content {
+  padding: 4px 0;
+}
+
+a:focus,
+a:active {
+  outline: none;
+}
+
+a,
+a:focus,
+a:hover {
+  cursor: pointer;
+  color: inherit;
+  text-decoration: none;
+}
+
+div:focus {
+  outline: none;
+}
+
+.fr {
+  float: right;
+}
+
+.fl {
+  float: left;
+}
+
+.pr-5 {
+  padding-right: 5px;
+}
+
+.pl-5 {
+  padding-left: 5px;
+}
+
+.block {
+  display: block;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.inlineBlock {
+  display: block;
+}
+
+.clearfix {
+  &:after {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: " ";
+    clear: both;
+    height: 0;
+  }
+}
+
+aside {
+  background: $slate100;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  border-radius: $cardRadiusSm;
+  border: 1px solid $borderColor;
+  display: block;
+  line-height: 1.6;
+  font-size: $fontSizeBase;
+  color: $slate700;
+
+  a {
+    color: $themePrimary;
+    cursor: pointer;
+    &:hover { color: $themePrimaryDark; }
+  }
+}
+
+// 主内容区全局
+.app-container {
+  padding: $contentPadding;
+  min-height: calc(100vh - #{$headerHeight});
+}
+
+// 移动端页脚贴左
+.app-wrapper.mobile .footer-copyright {
+  left: 0 !important;
+}
+
+// 全局卡片统一风格（大改）
+.container-card,
+.el-card {
+  border-radius: $cardRadius !important;
+  border: 1px solid $borderColor !important;
+  box-shadow: $cardShadow !important;
+  transition: box-shadow $transitionBase;
+
+  &:hover {
+    box-shadow: $cardShadowHover !important;
+  }
+}
+
+.components-container {
+  margin: 30px 50px;
+  position: relative;
+}
+
+.pagination-container {
+  margin-top: 30px;
+}
+
+.text-center {
+  text-align: center
+}
+
+.sub-navbar {
+  height: 52px;
+  line-height: 52px;
+  position: relative;
+  width: 100%;
+  text-align: right;
+  padding-right: 24px;
+  transition: $transitionBase;
+  background: linear-gradient(135deg, $themePrimary 0%, $themePrimaryDark 100%);
+  border-radius: 0 0 $cardRadiusSm $cardRadiusSm;
+
+  .subtitle {
+    font-size: 18px;
+    font-weight: $fontWeightMedium;
+    color: #fff;
+  }
+  &.draft { background: $slate400; }
+  &.deleted { background: $slate400; }
+}
+
+.link-type,
+.link-type:focus {
+  color: $themePrimary;
+  cursor: pointer;
+  &:hover { color: $themePrimaryDark; }
+}
+
+.filter-container {
+  padding-bottom: 10px;
+
+  .filter-item {
+    display: inline-block;
+    vertical-align: middle;
+    margin-bottom: 10px;
+  }
+}
+
+/* 表格空状态、分页器与主题一致 */
+.el-table__empty-block {
+  background: #fff;
+}
+.el-pagination.is-background .el-pager li:not(.disabled).active {
+  background-color: $themePrimary;
+}
+.el-pagination.is-background .el-pager li:hover {
+  color: $themePrimary;
+}
+
+//refine vue-multiselect plugin
+.multiselect {
+  line-height: 16px;
+}
+
+.multiselect--active {
+  z-index: 1000 !important;
+}

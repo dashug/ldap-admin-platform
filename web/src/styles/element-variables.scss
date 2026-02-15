@@ -1,0 +1,27 @@
+/**
+ * Element UI 主题：与 styles/variables.scss 中的全局主题色统一
+ */
+@import './variables.scss';
+
+/* theme color - 来自 variables 全局主题 */
+$--color-primary: $themePrimary;
+$--color-success: $themeSuccess;
+$--color-warning: $themeWarning;
+$--color-danger: $themeDanger;
+$--color-info: $themeInfo;
+
+$--button-font-weight: $fontWeightMedium;
+
+$--border-color-light: $slate200;
+$--border-color-lighter: $slate100;
+
+$--table-border: 1px solid #dfe6ec;
+
+/* 全局字体（Element 部分组件会用到） */
+$--font-path: "~element-ui/lib/theme-chalk/fonts";
+
+@import "~element-ui/packages/theme-chalk/src/index";
+
+:export {
+  theme: $--color-primary;
+}

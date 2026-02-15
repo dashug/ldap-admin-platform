@@ -1,0 +1,186 @@
+package common
+
+import (
+	"errors"
+	"fmt"
+	"log"
+	"math/rand"
+	"net"
+	"sync"
+	"time"
+
+	"github.com/dashug/ldap-admin-platform/config"
+
+	ldap "github.com/go-ldap/ldap/v3"
+)
+
+// ErrLDAPDisabled 表示 LDAP 未初始化或未连接（如未启动 LDAP 服务时）
+var ErrLDAPDisabled = errors.New("LDAP未初始化或未连接")
+
+var ldapPool *LdapConnPool
+var ldapInit = false
+var ldapInitOne sync.Once
+
+// Init 初始化连接
+func InitLDAP() {
+	if ldapInit {
+		return
+	}
+
+	ldapInitOne.Do(func() {
+		ldapInit = true
+	})
+
+	// Dail有两个参数 network,  address, 返回 (*Conn,  error)
+	ldapConn, err := ldap.DialURL(config.Conf.Ldap.Url, ldap.DialWithDialer(&net.Dialer{Timeout: 5 * time.Second}))
+	if err != nil {
+		Log.Panicf("初始化ldap连接异常: %v", err)
+		panic(fmt.Errorf("初始化ldap连接异常: %v", err))
+	}
+	err = ldapConn.Bind(config.Conf.Ldap.AdminDN, config.Conf.Ldap.AdminPass)
+	if err != nil {
+		Log.Panicf("绑定admin账号异常: %v", err)
+		panic(fmt.Errorf("绑定admin账号异常: %v", err))
+	}
+
+	// 全局变量赋值
+	ldapPool = &LdapConnPool{
+		conns:    make([]*ldap.Conn, 0),
+		reqConns: make(map[uint64]chan *ldap.Conn),
+		openConn: 0,
+		maxOpen:  config.Conf.Ldap.MaxConn,
+	}
+	PutLADPConn(ldapConn)
+
+	// 隐藏密码
+	showDsn := fmt.Sprintf(
+		"%s:******@tcp(%s)",
+		config.Conf.Ldap.AdminDN,
+		config.Conf.Ldap.Url,
+	)
+
+	Log.Info("初始化ldap完成! dsn: ", showDsn)
+}
+
+// GetLDAPConn 获取 LDAP 连接；若 LDAP 未初始化则返回 ErrLDAPDisabled
+func GetLDAPConn() (*ldap.Conn, error) {
+	if ldapPool == nil {
+		return nil, ErrLDAPDisabled
+	}
+	return ldapPool.GetConnection()
+}
+
+// PutLDAPConn 放回 LDAP 连接（conn 可为 nil，用于 GetLDAPConn 失败时的 defer）
+func PutLADPConn(conn *ldap.Conn) {
+	if conn == nil || ldapPool == nil {
+		return
+	}
+	ldapPool.PutConnection(conn)
+}
+
+type LdapConnPool struct {
+	mu       sync.Mutex
+	conns    []*ldap.Conn
+	reqConns map[uint64]chan *ldap.Conn
+	openConn int
+	maxOpen  int
+}
+
+// 获取一个 ladp Conn
+func (lcp *LdapConnPool) GetConnection() (*ldap.Conn, error) {
+	lcp.mu.Lock()
+	// 判断当前连接池内是否存在连接
+	connNum := len(lcp.conns)
+	if connNum > 0 {
+		lcp.openConn++
+		conn := lcp.conns[0]
+		copy(lcp.conns, lcp.conns[1:])
+		lcp.conns = lcp.conns[:connNum-1]
+
+		lcp.mu.Unlock()
+		// 发现连接已经 close 重新获取连接
+		if conn.IsClosing() {
+			return initLDAPConn()
+		}
+		return conn, nil
+	}
+
+	// 当现有连接池为空时，并且当前超过最大连接限制
+	if lcp.maxOpen != 0 && lcp.openConn > lcp.maxOpen {
+		// 创建一个等待队列
+		req := make(chan *ldap.Conn, 1)
+		reqKey := lcp.nextRequestKeyLocked()
+		lcp.reqConns[reqKey] = req
+		lcp.mu.Unlock()
+
+		// 等待请求归还
+		return <-req, nil
+	} else {
+		lcp.openConn++
+		lcp.mu.Unlock()
+		return initLDAPConn()
+	}
+}
+
+func (lcp *LdapConnPool) PutConnection(conn *ldap.Conn) {
+	log.Println("放回了一个 LDAP 连接")
+	lcp.mu.Lock()
+	defer lcp.mu.Unlock()
+
+	// 先判断是否存在等待的队列
+	if num := len(lcp.reqConns); num > 0 {
+		var req chan *ldap.Conn
+		var reqKey uint64
+		for reqKey, req = range lcp.reqConns {
+			break
+		}
+		delete(lcp.reqConns, reqKey)
+		req <- conn
+		return
+	} else {
+		lcp.openConn--
+		if !conn.IsClosing() {
+			lcp.conns = append(lcp.conns, conn)
+		}
+	}
+}
+
+// 获取下一个请求令牌
+func (lcp *LdapConnPool) nextRequestKeyLocked() uint64 {
+	for {
+		reqKey := rand.Uint64()
+		if _, ok := lcp.reqConns[reqKey]; !ok {
+			return reqKey
+		}
+	}
+}
+
+// 获取 ladp 连接
+func initLDAPConn() (*ldap.Conn, error) {
+	ldap, err := ldap.DialURL(config.Conf.Ldap.Url, ldap.DialWithDialer(&net.Dialer{Timeout: 5 * time.Second}))
+	if err != nil {
+		return nil, err
+	}
+	err = ldap.Bind(config.Conf.Ldap.AdminDN, config.Conf.Ldap.AdminPass)
+	if err != nil {
+		return nil, err
+	}
+	return ldap, err
+}
+
+// ProbeLDAPConnection 使用当前配置探测 LDAP 是否可连接（不依赖全局连接池）
+func ProbeLDAPConnection() (connected bool, message string) {
+	if config.Conf.Ldap.Url == "" {
+		return false, "未配置 LDAP 地址"
+	}
+	conn, err := ldap.DialURL(config.Conf.Ldap.Url, ldap.DialWithDialer(&net.Dialer{Timeout: 5 * time.Second}))
+	if err != nil {
+		return false, "连接失败: " + err.Error()
+	}
+	defer conn.Close()
+	err = conn.Bind(config.Conf.Ldap.AdminDN, config.Conf.Ldap.AdminPass)
+	if err != nil {
+		return false, "绑定失败: " + err.Error()
+	}
+	return true, "连接正常"
+}

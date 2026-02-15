@@ -1,0 +1,28 @@
+# 后端
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+go-ldap-admin
+*.test
+*.out
+tmp
+docs/docker-compose/data
+data
+bin
+.worktrees
+.idea
+.vscode
+.token
+
+# 前端
+web/node_modules/
+web/dist/
+.DS_Store
+npm-debug.log*
+**/*.log
+.webpack
+
+# 通用
+dist
