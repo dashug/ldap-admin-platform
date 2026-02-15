@@ -1,8 +1,8 @@
 # 贡献者指南
 
-欢迎反馈、bug 报告和拉取请求，可点击[issue](https://github.com/example/go-ldap-admin/issues) 提交.
+欢迎反馈、bug 报告和拉取请求，可点击 [issue](https://github.com/dashug/ldap-admin-platform/issues) 提交。
 
-如果你是第一次进行 GitHub 协作，可参阅： [协同开发流程](https://example.com/docs/collaborative-development)
+如果你是第一次进行 GitHub 协作，可参阅：[GitHub 协作入门](https://docs.github.com/cn/get-started/quickstart/contributing-to-projects)。
 
 1. 项目使用`golangci-lint`进行检测，提交 pr 之前请在本地执行 `make lint` 并通过。
 

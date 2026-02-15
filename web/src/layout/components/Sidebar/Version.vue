@@ -19,7 +19,7 @@ export default {
   data() {
     return {
       versionInfo: null,
-      repoUrl: 'https://github.com/opsre/go-ldap-admin'
+      repoUrl: 'https://github.com/dashug/ldap-admin-platform'
     }
   },
   computed: {

@@ -4,7 +4,7 @@
 
 ## 致谢
 
-本项目基于 [example/go-ldap-admin-ui](https://github.com/example/go-ldap-admin-ui) 二次开发，感谢原作者与全部贡献者。
+本前端为 [ldap-admin-platform](https://github.com/dashug/ldap-admin-platform) 项目的一部分，与后端同仓维护。
 
 ## 核心功能
 
@@ -100,10 +100,9 @@ flowchart LR
 - `保存后不同步`：确认对应平台 `启用同步` 是否打开。
 - `AD 配置失败`：优先使用 `ldaps://` 地址。
 
-## 维护仓库
+## 仓库
 
-- 后端：<https://github.com/dashug/go-ldap-admin>
-- 前端：<https://github.com/dashug/go-ldap-admin-ui>
+- 前后端一体：<https://github.com/dashug/ldap-admin-platform>
 
 ## 部署说明
 
@@ -111,7 +110,7 @@ flowchart LR
 
 请使用后端仓库提供的一键部署包（包含统一入口 + 后端，支持 OpenLDAP / AD）：
 
-- 仓库：<https://github.com/dashug/go-ldap-admin>
+- 仓库：<https://github.com/dashug/ldap-admin-platform>
 - 目录：`deploy/full-stack`
 
 执行：

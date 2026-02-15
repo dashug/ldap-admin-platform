@@ -53,33 +53,14 @@
 
 ---
 
-## 功能界面预览
+## 功能界面概览
 
-以下为各功能页面截图（需本地启动服务后按 [docs/screenshots/README.md](docs/screenshots/README.md) 说明截取并放入 `docs/screenshots/`，即可在此展示）。
+产品主要包含以下功能模块，登录后可在左侧菜单进入：
 
-### 登录与首页
-
-| 登录 | 首页 / 仪表盘 |
-|------|----------------|
-| ![登录](docs/screenshots/login.png) | ![首页](docs/screenshots/dashboard.png) |
-
-### 组织与用户
-
-| 用户管理 | 部门管理 | 同步字段映射 |
-|----------|----------|----------------|
-| ![用户管理](docs/screenshots/user.png) | ![部门管理](docs/screenshots/group.png) | ![同步字段映射](docs/screenshots/field-relation.png) |
-
-### 系统管理
-
-| 角色与权限 | 菜单 | 接口 | 系统信息 | API 密钥 |
-|------------|------|------|----------|----------|
-| ![角色与权限](docs/screenshots/role.png) | ![菜单](docs/screenshots/menu.png) | ![接口](docs/screenshots/api.png) | ![系统信息](docs/screenshots/system-info.png) | ![API 密钥](docs/screenshots/api-key.png) |
-
-### 审计
-
-| 操作日志 |
-|----------|
-| ![操作日志](docs/screenshots/operation-log.png) |
+- **首页**：仪表盘与概览
+- **组织与用户**：用户管理、部门管理、同步字段映射
+- **系统**：角色与权限、菜单、接口、系统信息、API 密钥
+- **审计**：操作日志
 
 ---
 
@@ -226,25 +207,6 @@ make run
 - **前端修改后不生效**：需重新执行 `make build-web` 再重新编译 Go（或 `make all`），因前端被 embed 进二进制。
 - **无法连接 LDAP**：检查 `config.yml` 中 `ldap.url`、`ldap.admin-dn`、`ldap.admin-pass` 及网络/防火墙。
 - **初始化失败或重复初始化**：确认首次运行后已将 **`system.init-data`** 改为 **`false`**。
-
----
-
-## 发布与自动 Release
-
-推送以 **`v` 开头的标签**（如 `v1.0.0`）时，GitHub Actions 会自动：
-
-1. 构建前端并编译 Go
-2. 为 **Linux (amd64/arm64)**、**macOS (amd64/arm64)**、**Windows (amd64)** 生成二进制
-3. 在 [Releases](https://github.com/dashug/ldap-admin-platform/releases) 创建对应版本，并附带上述构建产物
-
-**发布新版本示例：**
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-推送后到仓库 **Actions** 页查看构建进度，完成后在 **Releases** 页下载对应系统的可执行文件。
 
 ---
 

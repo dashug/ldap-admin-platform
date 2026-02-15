@@ -11,12 +11,12 @@
         <el-divider direction="vertical" />
         <span>Powered by </span>
           <span>
-            <a href="https://example.com" target="_blank">LDAP 管理平台</a>
+            <a href="https://github.com/dashug/ldap-admin-platform" target="_blank">LDAP 管理平台</a>
           </span>
         <el-divider direction="vertical" />
         <span>Copyright </span>
           <span>
-            <a href="https://example.com" target="_blank">Example</a>
+            <a href="https://github.com/dashug/ldap-admin-platform" target="_blank">dashug</a>
           </span>
       </div>
     </el-footer>

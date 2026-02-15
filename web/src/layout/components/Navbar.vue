@@ -21,7 +21,7 @@
         </el-tooltip>
 
         <el-tooltip content="GitHub" effect="dark" placement="bottom">
-          <el-link style="font-size: 23px;" class="iconfont icon-github right-menu-item" href="https://github.com/dashug/go-ldap-admin" :underline="false" target="_blank" />
+          <el-link style="font-size: 23px;" class="iconfont icon-github right-menu-item" href="https://github.com/dashug/ldap-admin-platform" :underline="false" target="_blank" />
         </el-tooltip>
 
       </template>
