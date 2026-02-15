@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/dashug/ldap-admin-platform/logic"
 	"github.com/dashug/ldap-admin-platform/model/request"
+	"github.com/dashug/ldap-admin-platform/public/tools"
 
 	"github.com/gin-gonic/gin"
 )
@@ -86,6 +87,23 @@ func (m *BaseController) DecryptPasswd(c *gin.Context) {
 	Run(c, req, func() (any, any) {
 		return logic.Base.DecryptPasswd(c, req)
 	})
+}
+
+// GetPublicKey 获取登录用 RSA 公钥（供前端加密密码，无需鉴权）
+// @Summary 获取 RSA 公钥
+// @Description 返回用于登录密码加密的 RSA 公钥 PEM，前端未配置 VUE_APP_PUBLIC_KEY 时可由此接口获取以保证与后端一致
+// @Tags 基础管理
+// @Accept application/json
+// @Produce application/json
+// @Success 200 {object} response.ResponseBody
+// @Router /base/publicKey [get]
+func (m *BaseController) GetPublicKey(c *gin.Context) {
+	data, err := logic.Base.GetPublicKey(c)
+	if err != nil {
+		tools.Err(c, tools.ReloadErr(err), nil)
+		return
+	}
+	tools.Success(c, data)
 }
 
 // GetConfig 获取系统配置

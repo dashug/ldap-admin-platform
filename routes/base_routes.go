@@ -48,6 +48,7 @@ func InitBaseRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) gi
 		base.GET("ping", controller.Demo)
 		base.GET("encryptpwd", controller.Base.EncryptPasswd) // 生成加密密码
 		base.GET("decryptpwd", controller.Base.DecryptPasswd) // 密码解密为明文
+		base.GET("publicKey", controller.Base.GetPublicKey)   // 获取登录用 RSA 公钥（无需鉴权）
 		base.GET("config", controller.Base.GetConfig)         // 获取系统配置
 		base.GET("ldapStatus", controller.Base.GetLDAPStatus)   // LDAP 连接状态
 		base.GET("systemInfo", controller.Base.GetSystemInfo)  // 系统信息（版本、运行时长、DB）

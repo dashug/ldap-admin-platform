@@ -49,6 +49,7 @@
 
 <script>
 import JSEncrypt from 'jsencrypt'
+import { getPublicKey } from '@/api/system/base'
 
 export default {
   name: 'Login',
@@ -70,9 +71,10 @@ export default {
         password: [{ required: true, trigger: 'blur', validator: validatePassword }]
       },
       passwordType: 'password',
-      publicKey: process.env.VUE_APP_PUBLIC_KEY,
+      publicKey: process.env.VUE_APP_PUBLIC_KEY || '',
       capsTooltip: false,
       loading: false,
+      publicKeyLoading: true,
       redirect: undefined,
       otherQuery: {}
     }
@@ -90,7 +92,7 @@ export default {
     }
   },
   created() {
-    // window.addEventListener('storage', this.afterQRScan)
+    this.fetchPublicKeyIfNeeded()
   },
   mounted() {
     if (this.loginForm.username === '') {
@@ -103,6 +105,23 @@ export default {
     // window.removeEventListener('storage', this.afterQRScan)
   },
   methods: {
+    fetchPublicKeyIfNeeded() {
+      if (this.publicKey && this.publicKey.trim()) {
+        this.publicKeyLoading = false
+        return
+      }
+      getPublicKey()
+        .then(res => {
+          const key = res && res.data
+          if (key && typeof key === 'string' && key.trim()) {
+            this.publicKey = key.trim()
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          this.publicKeyLoading = false
+        })
+    },
     checkCapslock(e) {
       const { key } = e
       this.capsTooltip = key && key.length === 1 && (key >= 'A' && key <= 'Z')
@@ -120,13 +139,20 @@ export default {
     handleLogin() {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
+          if (!this.publicKey || !this.publicKey.trim()) {
+            this.$message.error('正在获取加密公钥，请稍候再试')
+            this.fetchPublicKeyIfNeeded()
+            return
+          }
           this.loading = true
-          // 密码RSA加密处理
           const encryptor = new JSEncrypt()
-          // 设置公钥
           encryptor.setPublicKey(this.publicKey)
-          // 加密密码
           const encPassword = encryptor.encrypt(this.loginForm.password)
+          if (!encPassword) {
+            this.loading = false
+            this.$message.error('密码加密失败，请刷新页面重试')
+            return
+          }
           const encLoginForm = { username: this.loginForm.username, password: encPassword }
           this.$store.dispatch('user/login', encLoginForm)
             .then(() => {

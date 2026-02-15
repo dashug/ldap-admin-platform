@@ -21,6 +21,14 @@ export function logout() {
     method: 'post'
   })
 }
+// 获取登录用 RSA 公钥（未配置 VUE_APP_PUBLIC_KEY 时由后端获取，保证与后端一致）
+export function getPublicKey() {
+  return request({
+    url: '/api/base/publicKey',
+    method: 'get'
+  })
+}
+
 // 获取配置信息
 export function getConfig() {
   return request({

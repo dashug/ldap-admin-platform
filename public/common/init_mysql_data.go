@@ -303,6 +303,15 @@ func InitData() {
 		}
 	}
 
+	// 3.1 当开启初始化数据时，始终将 admin 用户密码与 config 中的 ldap.admin-pass 同步，避免配置改了但库内仍是旧密码导致无法登录
+	var adminUser model.User
+	if err := DB.Where("username = ?", "admin").First(&adminUser).Error; err == nil {
+		newPassHash := tools.NewGenPasswd(config.Conf.Ldap.AdminPass)
+		if err := DB.Model(&model.User{}).Where("username = ?", "admin").Update("password", newPassHash).Error; err != nil {
+			Log.Warnf("同步 admin 密码到配置失败: %v", err)
+		}
+	}
+
 	// 4.写入api
 	apis := []model.Api{
 		{

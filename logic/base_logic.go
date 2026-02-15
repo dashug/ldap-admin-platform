@@ -199,6 +199,14 @@ func (l BaseLogic) DecryptPasswd(c *gin.Context, req any) (data any, rspError an
 	return tools.NewParPasswd(r.Passwd), nil
 }
 
+// GetPublicKey 返回登录用 RSA 公钥 PEM，供前端加密密码（与后端密钥对一致）
+func (l BaseLogic) GetPublicKey(c *gin.Context) (data any, err error) {
+	if config.Conf.System == nil || len(config.Conf.System.RSAPublicBytes) == 0 {
+		return nil, fmt.Errorf("系统未配置 RSA 公钥")
+	}
+	return string(config.Conf.System.RSAPublicBytes), nil
+}
+
 // GetConfig 获取系统配置
 func (l BaseLogic) GetConfig(c *gin.Context, req any) (data any, rspError any) {
 	_, ok := req.(*request.BaseConfigReq)

@@ -75,8 +75,13 @@ type embedFileSystem struct {
 	http.FileSystem
 }
 
-func (e embedFileSystem) Exists(prefix string, path string) bool {
-	_, err := e.Open(path)
+func (e embedFileSystem) Exists(prefix string, filepath string) bool {
+	// io/fs.FS.Open 要求路径不能以 "/" 开头；根路径 "/" 交给 NoRoute 返回 index.html
+	p := strings.TrimPrefix(filepath, "/")
+	if p == "" {
+		return false
+	}
+	_, err := e.Open(p)
 	return err == nil
 }
 
