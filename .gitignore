@@ -11,6 +11,7 @@ tmp
 docs/docker-compose/data
 data
 bin
+release
 .worktrees
 .idea
 .vscode

@@ -141,7 +141,20 @@ make run
 
 ## 部署说明
 
-### 方式一：二进制直接部署（推荐）
+### 生产一键构建（推荐）
+
+在项目根目录执行 **`deploy/production-build.sh`**，会完成：前端依赖安装 → 前端构建 → 后端构建 → 产出到 **`release/ldap-admin-platform-<版本>/`**（含二进制、配置示例、部署说明、systemd 示例）。
+
+```bash
+./deploy/production-build.sh                    # 本机架构，版本自动或默认
+VERSION=v1.0.2 ./deploy/production-build.sh    # 指定版本
+BUILD_OS=linux BUILD_ARCH=amd64 ./deploy/production-build.sh   # 交叉编译 Linux
+PACK=1 ./deploy/production-build.sh             # 构建后打 tar.gz 包，便于上传服务器
+```
+
+将 `release/` 下对应目录或 tar 包拷贝到目标服务器，按目录内 **生产部署说明.md** 操作即可。
+
+### 方式一：二进制直接部署
 
 1. 在具备 Go + Node 环境的机器上执行：
    ```bash
