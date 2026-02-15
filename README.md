@@ -53,6 +53,36 @@
 
 ---
 
+## 功能界面预览
+
+以下为各功能页面截图（需本地启动服务后按 [docs/screenshots/README.md](docs/screenshots/README.md) 说明截取并放入 `docs/screenshots/`，即可在此展示）。
+
+### 登录与首页
+
+| 登录 | 首页 / 仪表盘 |
+|------|----------------|
+| ![登录](docs/screenshots/login.png) | ![首页](docs/screenshots/dashboard.png) |
+
+### 组织与用户
+
+| 用户管理 | 部门管理 | 同步字段映射 |
+|----------|----------|----------------|
+| ![用户管理](docs/screenshots/user.png) | ![部门管理](docs/screenshots/group.png) | ![同步字段映射](docs/screenshots/field-relation.png) |
+
+### 系统管理
+
+| 角色与权限 | 菜单 | 接口 | 系统信息 | API 密钥 |
+|------------|------|------|----------|----------|
+| ![角色与权限](docs/screenshots/role.png) | ![菜单](docs/screenshots/menu.png) | ![接口](docs/screenshots/api.png) | ![系统信息](docs/screenshots/system-info.png) | ![API 密钥](docs/screenshots/api-key.png) |
+
+### 审计
+
+| 操作日志 |
+|----------|
+| ![操作日志](docs/screenshots/operation-log.png) |
+
+---
+
 ## 目录结构
 
 ```

@@ -97,7 +97,7 @@ type BaseConfigImportReq struct {
 	GroupRDNAttr       string `json:"groupRDNAttr"`
 }
 
-// BaseUpdateEmailConfigReq 更新邮件通知配置（开关 + 邮件服务器）
+// BaseUpdateEmailConfigReq 更新邮件通知配置（开关 + 邮件服务器）+ Webhook 回调地址
 type BaseUpdateEmailConfigReq struct {
 	SendUserCreationMail bool   `json:"sendUserCreationMail"`
 	SmtpHost             string `json:"smtpHost" validate:"omitempty,max=255"`
@@ -105,4 +105,5 @@ type BaseUpdateEmailConfigReq struct {
 	SmtpUser             string `json:"smtpUser" validate:"omitempty,max=255"`
 	SmtpPass             string `json:"smtpPass" validate:"omitempty,max=255"` // 留空表示不修改
 	SmtpFrom             string `json:"smtpFrom" validate:"omitempty,max=255"`
+	WebhookURL           string `json:"webhookUrl" validate:"omitempty,max=2048"` // 用户/部门创建或同步后 HTTP 回调地址
 }

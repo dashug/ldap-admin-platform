@@ -274,6 +274,9 @@ func (l BaseLogic) GetConfig(c *gin.Context, req any) (data any, rspError any) {
 		rsp.SmtpUser = config.Conf.Email.User
 		rsp.SmtpFrom = config.Conf.Email.From
 	}
+	if config.Conf.System != nil {
+		rsp.WebhookURL = config.Conf.System.WebhookURL
+	}
 
 	return rsp, nil
 }
@@ -634,6 +637,10 @@ func (l BaseLogic) UpdateEmailConfig(c *gin.Context, req any) (data any, rspErro
 		}
 	}
 	viper.Set("email.send-user-creation-mail", r.SendUserCreationMail)
+	if config.Conf.System != nil {
+		config.Conf.System.WebhookURL = strings.TrimSpace(r.WebhookURL)
+		viper.Set("system.webhook-url", config.Conf.System.WebhookURL)
+	}
 	if err := viper.WriteConfig(); err != nil {
 		return nil, tools.NewOperationError(fmt.Errorf("保存配置文件失败: %s", err.Error()))
 	}

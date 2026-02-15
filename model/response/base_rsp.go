@@ -48,6 +48,8 @@ type BaseConfigRsp struct {
 	SmtpPort string `json:"smtpPort"`
 	SmtpUser string `json:"smtpUser"`
 	SmtpFrom string `json:"smtpFrom"`
+	// 用户/部门创建或同步后 HTTP 回调地址（前端可配置）
+	WebhookURL string `json:"webhookUrl"`
 }
 
 // LDAPStatusRsp LDAP 连接状态

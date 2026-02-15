@@ -7,6 +7,10 @@
     @open="fetchConfig"
   >
     <el-form v-loading="loading" size="small" label-width="180px" class="notification-form">
+      <el-form-item label="Webhook 回调地址">
+        <el-input v-model.trim="form.webhookUrl" placeholder="用户/部门创建或同步后 POST 回调的 URL，留空则不发送" clearable />
+        <div class="form-tip">填写后，在用户或部门创建、更新、同步完成时会向该地址发送 POST 请求</div>
+      </el-form-item>
       <el-form-item label="新建/同步用户时发送通知邮件">
         <div class="switch-row">
           <el-switch v-model="form.sendUserCreationMail" />
@@ -50,6 +54,7 @@ export default {
       loading: false,
       saving: false,
       form: {
+        webhookUrl: '',
         sendUserCreationMail: false,
         smtpHost: '',
         smtpPort: '',
@@ -67,6 +72,7 @@ export default {
       this.loading = true
       try {
         const { data } = await getConfig()
+        this.form.webhookUrl = data.webhookUrl || ''
         this.form.sendUserCreationMail = !!data.sendUserCreationMail
         this.form.smtpHost = data.smtpHost || ''
         this.form.smtpPort = data.smtpPort || ''
