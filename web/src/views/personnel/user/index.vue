@@ -3,7 +3,7 @@
     <el-card class="container-card" shadow="always">
       <!-- 筛选与常用操作 -->
       <div class="toolbar-section">
-        <el-form size="mini" :inline="true" :model="params" class="toolbar-form">
+        <el-form size="small" :inline="true" :model="params" class="toolbar-form">
           <el-form-item label="用户名">
             <el-input v-model.trim="params.username" style="width: 110px;" clearable placeholder="用户名" @keyup.enter="search" @clear="search" />
           </el-form-item>
@@ -42,7 +42,7 @@
           </el-form-item>
           <el-form-item>
             <el-dropdown trigger="click" @command="handleColumnCommand">
-              <el-button type="default" plain size="mini" icon="Operation">列设置</el-button>
+              <el-button type="default" plain size="small" icon="Operation">列设置</el-button>
               <template #dropdown><el-dropdown-menu class="column-setting-dropdown">
                 <el-dropdown-item command="reset"><i class="el-icon-refresh-left" /> 重置为默认</el-dropdown-item>
                 <el-dropdown-item divided disabled>显示列（勾选即显示）</el-dropdown-item>
@@ -57,22 +57,22 @@
       <!-- 配置与同步来源 -->
       <div class="toolbar-section toolbar-section--secondary">
         <span class="toolbar-label">配置</span>
-        <el-button :loading="loading" icon="Setting" type="primary" plain size="mini" @click="openDirectoryConfig">目录配置</el-button>
-        <el-button :loading="loading" icon="Connection" type="success" plain size="mini" @click="openThirdPartyConfig">平台对接</el-button>
-        <el-button :loading="loading" icon="Message" type="info" plain size="mini" @click="$refs.notificationSettings.open()">通知设置</el-button>
+        <el-button :loading="loading" icon="Setting" type="primary" plain size="small" @click="openDirectoryConfig">目录配置</el-button>
+        <el-button :loading="loading" icon="Connection" type="success" plain size="small" @click="openThirdPartyConfig">平台对接</el-button>
+        <el-button :loading="loading" icon="Message" type="info" plain size="small" @click="$refs.notificationSettings.open()">通知设置</el-button>
         <el-tag size="small" type="info" class="toolbar-tag">目录：{{ directoryTypeText }}</el-tag>
         <span class="toolbar-label toolbar-label--sync">同步来源</span>
         <template v-if="syncConfig.ldapEnableSync">
-          <el-button :loading="loading" icon="Download" type="warning" size="mini" @click="syncOpenLdapUsers">原 LDAP</el-button>
+          <el-button :loading="loading" icon="Download" type="warning" size="small" @click="syncOpenLdapUsers">原 LDAP</el-button>
         </template>
         <template v-if="syncConfig.dingTalkEnableSync">
-          <el-button :loading="loading" icon="Download" type="warning" size="mini" @click="syncDingTalkUsers">钉钉</el-button>
+          <el-button :loading="loading" icon="Download" type="warning" size="small" @click="syncDingTalkUsers">钉钉</el-button>
         </template>
         <template v-if="syncConfig.feiShuEnableSync">
-          <el-button :loading="loading" icon="Download" type="warning" size="mini" @click="syncFeiShuUsers">飞书</el-button>
+          <el-button :loading="loading" icon="Download" type="warning" size="small" @click="syncFeiShuUsers">飞书</el-button>
         </template>
         <template v-if="syncConfig.weComEnableSync">
-          <el-button :loading="loading" icon="Download" type="warning" size="mini" @click="syncWeComUsers">企微</el-button>
+          <el-button :loading="loading" icon="Download" type="warning" size="small" @click="syncWeComUsers">企微</el-button>
         </template>
       </div>
 
@@ -106,21 +106,21 @@
         <el-table-column fixed="right" label="操作" align="center" width="190">
           <template #default="scope">
             <el-tooltip content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="Edit" circle type="primary" @click="update(scope.row)" />
+              <el-button size="small" icon="Edit" circle type="primary" @click="update(scope.row)" />
             </el-tooltip>
             <el-tooltip class="delete-popover" content="重置密码" effect="dark" placement="top">
               <el-popconfirm title="确定重置该用户密码吗？" @confirm="openConfirmDialog('resetPassword', { username: scope.row.username }, '确认重置密码')">
-                <template #reference><el-button size="mini" icon="Key" circle type="warning"  /></template>
+                <template #reference><el-button size="small" icon="Key" circle type="warning"  /></template>
               </el-popconfirm>
             </el-tooltip>
             <el-tooltip class="delete-popover" content="删除" effect="dark" placement="top">
               <el-popconfirm title="确定删除吗？" @confirm="openConfirmDialog('singleDelete', { id: scope.row.ID }, '确认删除')">
-                <template #reference><el-button size="mini" icon="Delete" circle type="danger"  /></template>
+                <template #reference><el-button size="small" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
             <el-tooltip v-if="scope.row.syncState == 2" class="delete-popover" content="同步" effect="dark" placement="top">
               <el-popconfirm title="确定同步吗？" @confirm="singleSync(scope.row.ID)">
-                <template #reference><el-button size="mini" icon="Upload" circle type="success"  /></template>
+                <template #reference><el-button size="small" icon="Upload" circle type="success"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
@@ -242,8 +242,8 @@
           </el-row>
         </el-form>
         <template #footer><div class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
-          <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
+          <el-button size="small" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
         </div></template>
       </el-dialog>
 
@@ -376,11 +376,11 @@
           </el-row>
         </el-form>
         <template #footer><div class="dialog-footer">
-          <el-button size="mini" @click="exportConfig">导出配置</el-button>
-          <el-button size="mini" @click="openConfigImport">导入配置</el-button>
+          <el-button size="small" @click="exportConfig">导出配置</el-button>
+          <el-button size="small" @click="openConfigImport">导入配置</el-button>
           <input ref="configImportInput" type="file" accept=".json,application/json" style="display: none" @change="onConfigImportFile">
-          <el-button size="mini" @click="directoryDialogVisible = false">取 消</el-button>
-          <el-button size="mini" type="primary" :loading="savingDirectoryConfig" @click="submitDirectoryConfig">保 存</el-button>
+          <el-button size="small" @click="directoryDialogVisible = false">取 消</el-button>
+          <el-button size="small" type="primary" :loading="savingDirectoryConfig" @click="submitDirectoryConfig">保 存</el-button>
         </div></template>
       </el-dialog>
 
@@ -426,9 +426,9 @@
           </el-tab-pane>
         </el-tabs>
         <template #footer><div class="dialog-footer">
-          <el-button size="mini" @click="thirdPartyDialogVisible = false">取 消</el-button>
-          <el-button size="mini" type="warning" :loading="testingThirdParty" @click="handleTestThirdParty">测试连接</el-button>
-          <el-button size="mini" type="primary" :loading="savingThirdParty" @click="handleSaveThirdParty">保 存</el-button>
+          <el-button size="small" @click="thirdPartyDialogVisible = false">取 消</el-button>
+          <el-button size="small" type="warning" :loading="testingThirdParty" @click="handleTestThirdParty">测试连接</el-button>
+          <el-button size="small" type="primary" :loading="savingThirdParty" @click="handleSaveThirdParty">保 存</el-button>
         </div></template>
       </el-dialog>
 

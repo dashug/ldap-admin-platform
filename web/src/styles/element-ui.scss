@@ -1,14 +1,7 @@
-// Element UI 覆盖（与 variables 主题一致）
+// Element Plus 样式微调（主色由 element-variables.scss 的 --el-color-primary 控制，
+// 不再手写 .el-button--primary 背景色——否则会盖掉 Element Plus 对 plain 按钮的处理，
+// 导致 plain 主色按钮出现「同色文字盖在实色背景上」而文字不可见）
 @import './variables.scss';
-
-/* 主色覆盖 */
-.el-button--primary {
-  background-color: $themePrimary;
-  border-color: $themePrimary;
-  &:hover, &:focus { background-color: $themePrimaryDark; border-color: $themePrimaryDark; }
-}
-.el-link--primary { color: $themePrimary; &:hover { color: $themePrimaryDark; } }
-.el-tag--primary { background: rgba($themePrimary, 0.12); border-color: rgba($themePrimary, 0.3); color: $themePrimary; }
 
 /* 表格 */
 .el-table {

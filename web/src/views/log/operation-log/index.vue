@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card class="container-card" shadow="always">
-      <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
+      <el-form size="small" :inline="true" :model="params" class="demo-form-inline">
         <el-form-item label="请求人">
           <el-input
             v-model.trim="params.username"
@@ -51,7 +51,7 @@
           >批量删除</el-button>
         </el-form-item>
         <el-form-item>
-          <el-button type="danger" plain icon="Delete" size="mini" @click="handleClean">清空日志</el-button>
+          <el-button type="danger" plain icon="Delete" size="small" @click="handleClean">清空日志</el-button>
         </el-form-item>
       </el-form>
 
@@ -98,7 +98,7 @@
           <template #default="scope">
             <el-tooltip content="删除" effect="dark" placement="top">
               <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
-                <template #reference><el-button size="mini" icon="Delete" circle type="danger"  /></template>
+                <template #reference><el-button size="small" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>

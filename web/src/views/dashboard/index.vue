@@ -50,16 +50,16 @@
               <el-table-column show-overflow-tooltip prop="path" label="请求路径" min-width="180" />
               <el-table-column prop="method" label="方式" width="70" align="center">
                 <template #default="scope">
-                  <el-tag v-if="scope.row.method === 'GET'" type="success" size="mini">GET</el-tag>
-                  <el-tag v-else-if="scope.row.method === 'POST'" type="warning" size="mini">POST</el-tag>
-                  <el-tag v-else-if="scope.row.method === 'PUT'" type="primary" size="mini">PUT</el-tag>
-                  <el-tag v-else-if="scope.row.method === 'DELETE'" type="danger" size="mini">DEL</el-tag>
-                  <el-tag v-else size="mini">{{ scope.row.method }}</el-tag>
+                  <el-tag v-if="scope.row.method === 'GET'" type="success" size="small">GET</el-tag>
+                  <el-tag v-else-if="scope.row.method === 'POST'" type="warning" size="small">POST</el-tag>
+                  <el-tag v-else-if="scope.row.method === 'PUT'" type="primary" size="small">PUT</el-tag>
+                  <el-tag v-else-if="scope.row.method === 'DELETE'" type="danger" size="small">DEL</el-tag>
+                  <el-tag v-else size="small">{{ scope.row.method }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column prop="status" label="状态" width="70" align="center">
                 <template #default="scope">
-                  <el-tag :type="scope.row.status >= 200 && scope.row.status < 300 ? 'success' : 'danger'" size="mini">{{ scope.row.status }}</el-tag>
+                  <el-tag :type="scope.row.status >= 200 && scope.row.status < 300 ? 'success' : 'danger'" size="small">{{ scope.row.status }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column show-overflow-tooltip prop="startTime" label="时间" width="160" />

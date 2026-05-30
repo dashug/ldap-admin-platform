@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card class="container-card" shadow="always">
-      <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
+      <el-form size="small" :inline="true" :model="params" class="demo-form-inline">
         <el-form-item label="角色名称">
           <el-input v-model.trim="params.name" clearable placeholder="角色名称" @keyup.enter="search" @clear="search" />
         </el-form-item>
@@ -40,14 +40,14 @@
         <el-table-column fixed="right" label="操作" align="center" width="140">
           <template #default="scope">
             <el-tooltip content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="Edit" circle type="primary" @click="update(scope.row)" />
+              <el-button size="small" icon="Edit" circle type="primary" @click="update(scope.row)" />
             </el-tooltip>
             <el-tooltip content="权限" effect="dark" placement="top">
-              <el-button size="mini" icon="Key" circle type="warning" @click="updatePermission(scope.row.ID)" />
+              <el-button size="small" icon="Key" circle type="warning" @click="updatePermission(scope.row.ID)" />
             </el-tooltip>
             <el-tooltip content="删除" effect="dark" placement="top">
               <el-popconfirm style="margin-left:10px" title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
-                <template #reference><el-button size="mini" icon="Delete" circle type="danger"  /></template>
+                <template #reference><el-button size="small" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
@@ -88,8 +88,8 @@
           </el-form-item>
         </el-form>
         <template #footer><div>
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
-          <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
+          <el-button size="small" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
         </div></template>
       </el-dialog>
 
@@ -125,8 +125,8 @@
           </el-tab-pane>
         </el-tabs>
         <template #footer><div>
-          <el-button size="mini" :loading="permissionLoading" @click="cancelPermissionForm()">取 消</el-button>
-          <el-button size="mini" type="primary" @click="submitPermissionForm()">确 定</el-button>
+          <el-button size="small" :loading="permissionLoading" @click="cancelPermissionForm()">取 消</el-button>
+          <el-button size="small" type="primary" @click="submitPermissionForm()">确 定</el-button>
         </div></template>
       </el-dialog>
 

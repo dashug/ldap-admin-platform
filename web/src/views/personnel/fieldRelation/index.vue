@@ -5,7 +5,7 @@
         <p>同步钉钉/企微/飞书用户或分组时，用此处配置「第三方字段名 → 本系统属性」的对应关系；若同步规则中选择了「按字段关联」生成用户名，会按本页配置取值。</p>
       </div>
       <el-form
-        size="mini"
+        size="small"
         :inline="true"
         :model="params"
         class="demo-form-inline"
@@ -91,7 +91,7 @@
           <template #default="scope">
             <el-tooltip content="编辑" effect="dark" placement="top">
               <el-button
-                size="mini"
+                size="small"
                 icon="Edit"
                 circle
                 type="primary"
@@ -109,7 +109,7 @@
                 @confirm="singleDelete(scope.row.ID)"
               >
                 <template #reference><el-button
-                  size="mini"
+                  size="small"
                   icon="Delete"
                   circle
                   type="danger"
@@ -282,9 +282,9 @@
           </template>
         </el-form>
         <template #footer><div class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
           <el-button
-            size="mini"
+            size="small"
             :loading="submitLoading"
             type="primary"
             @click="submitForm('A')"
@@ -437,9 +437,9 @@
           </template>
         </el-form>
         <template #footer><div class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
           <el-button
-            size="mini"
+            size="small"
             :loading="submitLoading"
             type="primary"
             @click="submitForm('B')"

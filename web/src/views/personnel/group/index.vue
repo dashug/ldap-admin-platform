@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card class="container-card" shadow="always">
-      <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
+      <el-form size="small" :inline="true" :model="params" class="demo-form-inline">
         <el-form-item label="名称">
           <el-input v-model.trim="params.groupName" style="width: 100px;" clearable placeholder="名称" @keyup.enter="search" @clear="search" />
         </el-form-item>
@@ -37,7 +37,7 @@
         </el-form-item>
         <el-form-item>
           <el-dropdown trigger="click" @command="handleGroupColumnCommand">
-            <el-button type="default" plain size="mini" icon="Operation">列设置</el-button>
+            <el-button type="default" plain size="small" icon="Operation">列设置</el-button>
             <template #dropdown><el-dropdown-menu class="column-setting-dropdown">
               <el-dropdown-item command="reset"><i class="el-icon-refresh-left" /> 重置为默认</el-dropdown-item>
               <el-dropdown-item divided disabled>显示列</el-dropdown-item>
@@ -80,19 +80,19 @@
         <el-table-column fixed="right" label="操作" align="center" width="220">
           <template #default="scope">
             <el-tooltip v-if="scope.row.groupType != 'ou' && scope.row.groupName != 'root'" content="添加" effect="dark" placement="top">
-              <el-button size="mini" icon="Setting" circle type="info" @click="addUp(scope.row)" />
+              <el-button size="small" icon="Setting" circle type="info" @click="addUp(scope.row)" />
             </el-tooltip>
             <el-tooltip content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="Edit" circle type="primary" @click="update(scope.row)" />
+              <el-button size="small" icon="Edit" circle type="primary" @click="update(scope.row)" />
             </el-tooltip>
             <el-tooltip class="delete-popover" content="删除" effect="dark" placement="top">
               <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
-                <template #reference><el-button size="mini" icon="Delete" circle type="danger"  /></template>
+                <template #reference><el-button size="small" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
             <el-tooltip v-if="scope.row.syncState === 2" class="delete-popover" content="同步" effect="dark" placement="top">
               <el-popconfirm title="确定同步吗？" @confirm="singleSync(scope.row.ID)">
-                <template #reference><el-button size="mini" icon="Upload" circle type="success"  /></template>
+                <template #reference><el-button size="small" icon="Upload" circle type="success"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
@@ -128,8 +128,8 @@
           </el-form-item>
         </el-form>
         <template #footer><div class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
-          <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
+          <el-button size="small" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
         </div></template>
       </el-dialog>
       <!-- 同步预览（Dry Run）结果 -->
@@ -162,8 +162,8 @@
           </el-form-item>
         </el-form>
         <template #footer><div class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
-          <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
+          <el-button size="small" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
         </div></template>
       </el-dialog>
     </el-card>

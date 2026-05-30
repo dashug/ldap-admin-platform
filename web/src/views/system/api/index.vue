@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card class="container-card" shadow="always">
-      <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
+      <el-form size="small" :inline="true" :model="params" class="demo-form-inline">
         <el-form-item label="访问路径">
           <el-input v-model.trim="params.path" clearable placeholder="访问路径" @keyup.enter="search" @clear="search" />
         </el-form-item>
@@ -45,11 +45,11 @@
         <el-table-column fixed="right" label="操作" align="center" width="120">
           <template #default="scope">
             <el-tooltip content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="Edit" circle type="primary" @click="update(scope.row)" />
+              <el-button size="small" icon="Edit" circle type="primary" @click="update(scope.row)" />
             </el-tooltip>
             <el-tooltip class="delete-popover" content="删除" effect="dark" placement="top">
               <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
-                <template #reference><el-button size="mini" icon="Delete" circle type="danger"  /></template>
+                <template #reference><el-button size="small" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
@@ -90,8 +90,8 @@
           </el-form-item>
         </el-form>
         <template #footer><div class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
-          <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
+          <el-button size="small" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
         </div></template>
       </el-dialog>
 

@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card class="container-card" shadow="always">
-      <el-form size="mini" :inline="true" class="demo-form-inline">
+      <el-form size="small" :inline="true" class="demo-form-inline">
         <el-form-item>
           <el-button :loading="loading" icon="Plus" type="primary" @click="openCreate">新建密钥</el-button>
         </el-form-item>
@@ -23,7 +23,7 @@
           <template #default="scope">
             <el-popconfirm title="删除后该密钥将立即失效，确定删除？" @confirm="doDelete(scope.row.id)">
               <template #reference>
-                <el-button size="mini" type="danger" icon="Delete">删除</el-button>
+                <el-button size="small" type="danger" icon="Delete">删除</el-button>
               </template>
             </el-popconfirm>
           </template>

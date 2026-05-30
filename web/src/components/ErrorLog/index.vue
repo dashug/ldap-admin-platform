@@ -9,7 +9,7 @@
     <el-dialog v-model="dialogTableVisible" width="80%" append-to-body>
       <template #header><div>
         <span style="padding-right: 10px;">Error Log</span>
-        <el-button size="mini" type="primary" icon="Delete" @click="clearAll">Clear All</el-button>
+        <el-button size="small" type="primary" icon="Delete" @click="clearAll">Clear All</el-button>
       </div></template>
       <el-table :data="errorLogs" border>
         <el-table-column label="Message">
