@@ -27,8 +27,7 @@
           :class="{ 'is-active': isActive(it.path) }"
           :title="it.title"
         >
-          <svg-icon v-if="it.icon && !it.icon.includes('el-icon')" :icon-class="it.icon" class="nav__icon" />
-          <el-icon v-else class="nav__icon"><Document /></el-icon>
+          <el-icon class="nav__icon"><component :is="iconFor(it.title)" /></el-icon>
           <span v-if="!isCollapse" class="nav__label">{{ it.title }}</span>
         </router-link>
       </template>
@@ -121,6 +120,25 @@ export default {
     isActive(path) {
       const cur = this.$route.path
       return cur === path || cur.startsWith(path + '/')
+    },
+    // 统一为 Element Plus 线性图标（替代旧 svg 雪碧图，更精致一致）
+    iconFor(title) {
+      const m = {
+        '首页': 'Odometer',
+        '用户': 'User',
+        '部门': 'OfficeBuilding',
+        '同步字段映射': 'Switch',
+        '角色与权限': 'UserFilled',
+        '菜单': 'Menu',
+        '接口': 'Share',
+        '系统信息': 'Monitor',
+        'API 密钥': 'Key',
+        'API密钥': 'Key',
+        '操作日志': 'Tickets',
+        '分组成员': 'User',
+        '个人中心': 'User'
+      }
+      return m[title] || 'Menu'
     },
     openCmdk() {
       window.dispatchEvent(new Event('open-cmdk'))
@@ -226,22 +244,29 @@ export default {
   display: flex;
   align-items: center;
   gap: 11px;
-  height: 38px;
-  padding: 0 10px;
-  margin: 1px 0;
-  border-radius: 8px;
+  height: 40px;
+  padding: 0 11px;
+  margin: 2px 0;
+  border-radius: 9px;
   color: $slate600;
   font-size: 14px;
+  font-weight: $fontWeightMedium;
   text-decoration: none;
   cursor: pointer;
-  transition: background $transitionBase, color $transitionBase;
-  .nav__icon { font-size: 17px; flex: none; }
+  transition: background $transitionBase, color $transitionBase, box-shadow $transitionBase;
+  .nav__icon { font-size: 18px; width: 18px; flex: none; color: $slate400; transition: color $transitionBase; }
   .nav__label { white-space: nowrap; overflow: hidden; }
-  &:hover { background: $slate100; color: $slate900; }
+  &:hover {
+    background: $slate100;
+    color: $slate900;
+    .nav__icon { color: $slate600; }
+  }
   &.is-active {
     background: $menuActiveBg;
     color: $themePrimary;
     font-weight: $fontWeightSemibold;
+    box-shadow: 0 1px 2px rgba(79, 70, 229, 0.12);
+    .nav__icon { color: $themePrimary; }
   }
 }
 
