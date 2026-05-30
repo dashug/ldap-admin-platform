@@ -166,30 +166,31 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
-  padding: 14px 12px 12px;
+  background: linear-gradient(185deg, #1e293b 0%, #0f172a 60%, #0b1120 100%);
+  padding: 16px 14px 14px;
 }
 
 .nav__brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 8px 14px;
+  gap: 11px;
+  padding: 4px 8px 18px;
   .nav__logo {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     flex: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 9px;
+    border-radius: 10px;
     color: #fff;
     background: linear-gradient(135deg, $themePrimary, $themePrimaryLight);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.45);
   }
   .nav__brandname {
     font-size: 15px;
     font-weight: $fontWeightSemibold;
-    color: $slate800;
+    color: #f8fafc;
     white-space: nowrap;
   }
 }
@@ -199,24 +200,24 @@ export default {
   align-items: center;
   gap: 8px;
   width: 100%;
-  height: 36px;
-  margin-bottom: 12px;
-  padding: 0 10px;
-  border: 1px solid $slate200;
-  border-radius: 9px;
-  background: $slate50;
+  height: 38px;
+  margin-bottom: 14px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
   color: $slate400;
   font-size: 13px;
   cursor: pointer;
   transition: all $transitionBase;
-  &:hover { background: #fff; border-color: $slate300; }
+  &:hover { background: rgba(255, 255, 255, 0.09); border-color: rgba(255, 255, 255, 0.16); }
   .nav__search-text { flex: 1; text-align: left; }
   .nav__kbd {
     font-family: $fontFamilyBase;
     font-size: 11px;
-    color: $slate500;
-    background: #fff;
-    border: 1px solid $slate200;
+    color: $slate400;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.10);
     border-radius: 5px;
     padding: 0 5px;
   }
@@ -228,52 +229,52 @@ export default {
   margin: 0 -4px;
   padding: 0 4px;
   &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-thumb { background: $slate200; border-radius: 4px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 4px; }
 }
 
 .nav__section {
   font-size: 11px;
   font-weight: $fontWeightSemibold;
-  letter-spacing: 0.04em;
-  color: $slate400;
-  padding: 14px 10px 5px;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  padding: 16px 10px 6px;
   text-transform: uppercase;
 }
 
 .nav__item {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   height: 40px;
   padding: 0 11px;
   margin: 2px 0;
   border-radius: 9px;
-  color: $slate600;
+  color: #cbd5e1;
   font-size: 14px;
   font-weight: $fontWeightMedium;
   text-decoration: none;
   cursor: pointer;
   transition: background $transitionBase, color $transitionBase, box-shadow $transitionBase;
-  .nav__icon { font-size: 18px; width: 18px; flex: none; color: $slate400; transition: color $transitionBase; }
+  .nav__icon { font-size: 18px; width: 18px; flex: none; color: #64748b; transition: color $transitionBase; }
   .nav__label { white-space: nowrap; overflow: hidden; }
   &:hover {
-    background: $slate100;
-    color: $slate900;
-    .nav__icon { color: $slate600; }
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    .nav__icon { color: #cbd5e1; }
   }
   &.is-active {
-    background: $menuActiveBg;
-    color: $themePrimary;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.30), rgba(79, 70, 229, 0.18));
+    color: #fff;
     font-weight: $fontWeightSemibold;
-    box-shadow: 0 1px 2px rgba(79, 70, 229, 0.12);
-    .nav__icon { color: $themePrimary; }
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28), inset 0 0 0 1px rgba(129, 140, 248, 0.30);
+    .nav__icon { color: #a5b4fc; }
   }
 }
 
 .nav__user {
   margin-top: 8px;
   padding-top: 10px;
-  border-top: 1px solid $slate100;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: block;
   width: 100%;
 }
@@ -281,15 +282,15 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 8px;
-  border-radius: 9px;
+  padding: 8px;
+  border-radius: 10px;
   cursor: pointer;
   transition: background $transitionBase;
-  &:hover { background: $slate100; }
-  .nav__avatar { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; flex: none; }
+  &:hover { background: rgba(255, 255, 255, 0.06); }
+  .nav__avatar { width: 32px; height: 32px; border-radius: 9px; object-fit: cover; flex: none; }
   .nav__user-meta { flex: 1; min-width: 0; }
-  .nav__user-name { font-size: 13px; font-weight: $fontWeightMedium; color: $slate800; line-height: 1.2; }
-  .nav__user-sub { font-size: 11px; color: $slate400; }
-  .nav__user-caret { color: $slate400; font-size: 12px; }
+  .nav__user-name { font-size: 13px; font-weight: $fontWeightSemibold; color: #f1f5f9; line-height: 1.2; }
+  .nav__user-sub { font-size: 11px; color: #64748b; }
+  .nav__user-caret { color: #64748b; font-size: 12px; }
 }
 </style>
