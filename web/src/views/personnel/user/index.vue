@@ -488,12 +488,6 @@ export default {
   components: {
     NotificationSettings
   },
-  props: {
-    disabled: { // username 默认不可编辑，若需要至为可编辑，请（在新增和编辑处）去掉这个值的控制，且配合后端的ldap-user-name-modify配置使用
-      type: Boolean,
-      default: false
-    }
-  },
   data() {
     var checkPhone = (rule, value, callback) => {
       if (!value) {
@@ -508,6 +502,8 @@ export default {
       }
     }
     return {
+      // username 默认不可编辑（新增时可编辑、编辑时禁用）；如需放开请配合后端 ldap-user-name-modify
+      disabled: false,
       // 查询参数
       params: {
         username: '',
