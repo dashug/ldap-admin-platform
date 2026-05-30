@@ -1,85 +1,50 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <!-- 筛选与常用操作 -->
-      <div class="toolbar-section">
-        <el-form size="small" :inline="true" :model="params" class="toolbar-form">
-          <el-form-item label="用户名">
-            <el-input v-model.trim="params.username" style="width: 110px;" clearable placeholder="用户名" @keyup.enter="search" @clear="search" />
-          </el-form-item>
-          <el-form-item label="昵称">
-            <el-input v-model.trim="params.nickname" style="width: 110px;" clearable placeholder="昵称" @keyup.enter="search" @clear="search" />
-          </el-form-item>
-          <el-form-item label="状态">
-            <el-select v-model.trim="params.status" style="width: 100px;" clearable placeholder="状态" @change="search" @clear="search">
-              <el-option label="正常" value="1" />
-              <el-option label="禁用" value="2" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="同步状态">
-            <el-select v-model.trim="params.syncState" style="width: 100px;" clearable placeholder="同步状态" @change="search" @clear="search">
-              <el-option label="已同步" value="1" />
-              <el-option label="未同步" value="2" />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button :loading="loading" icon="Search" type="primary" @click="search">查询</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button :loading="loading" icon="Plus" type="warning" @click="create">新增</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="Delete" type="danger" @click="batchDelete">批量删除</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-dropdown trigger="click" @command="handleMoreCommand">
-              <el-button plain>更多操作<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
-              <template #dropdown><el-dropdown-menu>
-                <el-dropdown-item command="batchSync" :disabled="multipleSelection.length === 0" icon="Upload">批量同步</el-dropdown-item>
-                <el-dropdown-item command="syncPreview" :disabled="multipleSelection.length === 0" icon="View">同步预览</el-dropdown-item>
-                <el-dropdown-item command="export" icon="Download">导出 Excel</el-dropdown-item>
-              </el-dropdown-menu></template>
-            </el-dropdown>
-          </el-form-item>
-          <el-form-item>
-            <el-dropdown trigger="click" @command="handleColumnCommand">
-              <el-button type="default" plain size="small" icon="Operation">列设置</el-button>
-              <template #dropdown><el-dropdown-menu class="column-setting-dropdown">
-                <el-dropdown-item command="reset"><i class="el-icon-refresh-left" /> 重置为默认</el-dropdown-item>
-                <el-dropdown-item divided disabled>显示列（勾选即显示）</el-dropdown-item>
-                <el-dropdown-item v-for="col in defaultUserColumns" :key="col.prop" :command="col.prop">
-                  <el-checkbox :value="columnConfig.visible[col.prop]" @click.prevent>{{ col.label }}</el-checkbox>
-                </el-dropdown-item>
-              </el-dropdown-menu></template>
-            </el-dropdown>
-          </el-form-item>
-        </el-form>
-      </div>
-      <!-- 配置与同步来源 -->
-      <div class="toolbar-section toolbar-section--secondary">
-        <span class="toolbar-label">配置</span>
-        <el-dropdown trigger="click" @command="handleConfigCommand">
-          <el-button type="primary" plain size="small">系统配置<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+    <page-header title="用户管理" subtitle="管理目录用户、账号状态与第三方同步">
+      <template #actions>
+        <el-tag type="info" effect="plain" size="small">目录：{{ directoryTypeText }}</el-tag>
+        <el-button type="primary" icon="Plus" @click="create">新建用户</el-button>
+      </template>
+    </page-header>
+
+    <el-card class="container-card" shadow="never">
+      <!-- 筛选栏 -->
+      <div class="filter-bar">
+        <el-input v-model.trim="params.username" prefix-icon="Search" placeholder="搜索用户名" clearable style="width: 200px;" @keyup.enter="search" @clear="search" />
+        <el-input v-model.trim="params.nickname" placeholder="昵称" clearable style="width: 130px;" @keyup.enter="search" @clear="search" />
+        <el-select v-model.trim="params.status" placeholder="状态" clearable style="width: 110px;" @change="search" @clear="search">
+          <el-option label="正常" value="1" />
+          <el-option label="禁用" value="2" />
+        </el-select>
+        <el-select v-model.trim="params.syncState" placeholder="同步状态" clearable style="width: 120px;" @change="search" @clear="search">
+          <el-option label="已同步" value="1" />
+          <el-option label="未同步" value="2" />
+        </el-select>
+        <el-button :loading="loading" icon="Search" @click="search">查询</el-button>
+        <div class="filter-bar__spacer" />
+        <el-button :disabled="multipleSelection.length === 0" :loading="loading" plain type="danger" icon="Delete" @click="batchDelete">批量删除</el-button>
+        <el-dropdown trigger="click" @command="handleMoreCommand">
+          <el-button plain>更多操作<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
           <template #dropdown><el-dropdown-menu>
-            <el-dropdown-item command="directory" icon="Setting">目录配置</el-dropdown-item>
-            <el-dropdown-item command="thirdparty" icon="Connection">平台对接</el-dropdown-item>
-            <el-dropdown-item command="notification" icon="Message">通知设置</el-dropdown-item>
+            <el-dropdown-item command="batchSync" :disabled="multipleSelection.length === 0" icon="Upload">批量同步</el-dropdown-item>
+            <el-dropdown-item command="syncPreview" :disabled="multipleSelection.length === 0" icon="View">同步预览</el-dropdown-item>
+            <el-dropdown-item command="export" icon="Download">导出 Excel</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.ldapEnableSync" divided command="syncLdap" icon="Download">从原 LDAP 同步</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.dingTalkEnableSync" command="syncDing" icon="Download">从钉钉同步</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.feiShuEnableSync" command="syncFeishu" icon="Download">从飞书同步</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.weComEnableSync" command="syncWecom" icon="Download">从企微同步</el-dropdown-item>
           </el-dropdown-menu></template>
         </el-dropdown>
-        <el-tag size="small" type="info" class="toolbar-tag">目录：{{ directoryTypeText }}</el-tag>
-        <span class="toolbar-label toolbar-label--sync">同步来源</span>
-        <template v-if="syncConfig.ldapEnableSync">
-          <el-button :loading="loading" icon="Download" type="warning" size="small" @click="syncOpenLdapUsers">原 LDAP</el-button>
-        </template>
-        <template v-if="syncConfig.dingTalkEnableSync">
-          <el-button :loading="loading" icon="Download" type="warning" size="small" @click="syncDingTalkUsers">钉钉</el-button>
-        </template>
-        <template v-if="syncConfig.feiShuEnableSync">
-          <el-button :loading="loading" icon="Download" type="warning" size="small" @click="syncFeiShuUsers">飞书</el-button>
-        </template>
-        <template v-if="syncConfig.weComEnableSync">
-          <el-button :loading="loading" icon="Download" type="warning" size="small" @click="syncWeComUsers">企微</el-button>
-        </template>
+        <el-dropdown trigger="click" @command="handleColumnCommand">
+          <el-button plain icon="Operation">列设置</el-button>
+          <template #dropdown><el-dropdown-menu class="column-setting-dropdown">
+            <el-dropdown-item command="reset"><i class="el-icon-refresh-left" /> 重置为默认</el-dropdown-item>
+            <el-dropdown-item divided disabled>显示列（勾选即显示）</el-dropdown-item>
+            <el-dropdown-item v-for="col in defaultUserColumns" :key="col.prop" :command="col.prop">
+              <el-checkbox :value="columnConfig.visible[col.prop]" @click.prevent>{{ col.label }}</el-checkbox>
+            </el-dropdown-item>
+          </el-dropdown-menu></template>
+        </el-dropdown>
       </div>
 
       <el-skeleton v-if="loading && tableData.length === 0" :rows="6" animated style="padding: 12px 4px;" />
@@ -486,6 +451,7 @@ import { getRoles } from '@/api/system/role'
 import { getGroupTree } from '@/api/personnel/group'
 import { getConfig, updateDirectoryConfig, testThirdPartyConfig, updateThirdPartyConfig, importConfig } from '@/api/system/base'
 import NotificationSettings from '@/components/NotificationSettings/index.vue'
+import PageHeader from '@/components/PageHeader/index.vue'
 import { export_json_to_excel } from '@/vendor/Export2Excel'
 import { loadTableColumnConfig, saveTableColumnConfig, defaultUserColumns, STORAGE_KEY_USER_TABLE } from '@/utils/tableColumnSettings'
 import { ElMessage as Message } from 'element-plus'
@@ -493,6 +459,7 @@ import { ElMessage as Message } from 'element-plus'
 export default {
   name: 'User',
   components: {
+    PageHeader,
     NotificationSettings
   },
   data() {
@@ -888,6 +855,10 @@ export default {
       if (cmd === 'batchSync') this.batchSync()
       else if (cmd === 'syncPreview') this.syncPreview()
       else if (cmd === 'export') this.exportUserList()
+      else if (cmd === 'syncLdap') this.syncOpenLdapUsers()
+      else if (cmd === 'syncDing') this.syncDingTalkUsers()
+      else if (cmd === 'syncFeishu') this.syncFeiShuUsers()
+      else if (cmd === 'syncWecom') this.syncWeComUsers()
     },
     // 「系统配置」下拉
     handleConfigCommand(cmd) {

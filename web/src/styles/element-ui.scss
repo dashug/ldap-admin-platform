@@ -116,6 +116,16 @@
   gap: 12px;
 }
 
+/* 筛选栏：搜索/过滤 + 右侧操作（现代列表页通用版式） */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  &__spacer { flex: 1 1 auto; }
+}
+
 /* 卡片：扁平 + 细边框 + 轻阴影 */
 .el-card {
   border-radius: $cardRadius;
