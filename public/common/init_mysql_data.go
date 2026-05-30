@@ -868,16 +868,23 @@ func InitData() {
 	}
 
 	if len(newRoleCasbin) > 0 {
-		rules := make([][]string, 0)
+		// 注意：gorm-adapter 对批量 AddPolicies 的自动持久化在此版本下不生效，
+		// 会导致策略仅存在于内存、重启（init-data=false）后管理员丢失绝大部分接口权限。
+		// 故改用逐条 AddPolicy（已验证可正确落库）。
+		var added, skipped, failed int
 		for _, c := range newRoleCasbin {
-			rules = append(rules, []string{
-				c.Keyword, c.Path, c.Method,
-			})
+			ok, err := CasbinEnforcer.AddPolicy(c.Keyword, c.Path, c.Method)
+			switch {
+			case err != nil:
+				failed++
+				Log.Errorf("写入casbin策略失败 [%s %s %s]：%v", c.Keyword, c.Method, c.Path, err)
+			case !ok:
+				skipped++ // 策略已存在（如 apiKey 权限已由 ensureApiKeyPolicies 写入）
+			default:
+				added++
+			}
 		}
-		isAdd, err := CasbinEnforcer.AddPolicies(rules)
-		if !isAdd {
-			Log.Errorf("写入casbin数据失败：%v", err)
-		}
+		Log.Infof("初始化 casbin 策略完成，新增 %d 条，已存在跳过 %d 条，失败 %d 条", added, skipped, failed)
 	}
 
 	// 6.写入分组
