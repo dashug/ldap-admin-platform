@@ -82,6 +82,23 @@
   font-weight: $fontWeightMedium;
 }
 
+/* 抽屉（右侧滑入的表单面板） */
+.el-drawer__header {
+  margin-bottom: 0;
+  padding: 18px 22px;
+  border-bottom: 1px solid $borderColor;
+  font-size: $fontSizeLarge;
+  font-weight: $fontWeightSemibold;
+  color: $slate800;
+}
+.el-drawer__body { padding: 22px; }
+.el-drawer__footer { padding: 14px 22px; border-top: 1px solid $borderColor; }
+.drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 /* 卡片：扁平 + 细边框 + 轻阴影 */
 .el-card {
   border-radius: $cardRadius;

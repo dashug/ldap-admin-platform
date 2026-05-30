@@ -147,7 +147,7 @@
         />
       </div>
 
-      <el-dialog :title="dialogFormTitle" v-model="dialogFormVisible" width="50%">
+      <el-drawer :title="dialogFormTitle" v-model="dialogFormVisible" direction="rtl" size="600px" class="form-drawer">
         <el-form ref="dialogForm" size="small" :model="dialogFormData" :rules="dialogFormRules" label-width="80px">
           <el-row>
             <el-col :span="12">
@@ -248,11 +248,11 @@
             </el-col>
           </el-row>
         </el-form>
-        <template #footer><div class="dialog-footer">
-          <el-button size="small" @click="cancelForm()">取 消</el-button>
-          <el-button size="small" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
+        <template #footer><div class="drawer-footer">
+          <el-button @click="cancelForm()">取 消</el-button>
+          <el-button :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
         </div></template>
-      </el-dialog>
+      </el-drawer>
 
       <!-- 重置密码结果对话框 -->
       <el-dialog
