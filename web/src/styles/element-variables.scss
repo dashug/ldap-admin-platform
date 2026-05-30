@@ -1,27 +1,27 @@
 /**
- * Element UI 主题：与 styles/variables.scss 中的全局主题色统一
+ * Element Plus 主题：与 styles/variables.scss 中的全局主题色统一。
+ * Element Plus 通过 CSS 变量控制主题，这里覆盖主色及其衍生浅色。
  */
 @import './variables.scss';
 
-/* theme color - 来自 variables 全局主题 */
-$--color-primary: $themePrimary;
-$--color-success: $themeSuccess;
-$--color-warning: $themeWarning;
-$--color-danger: $themeDanger;
-$--color-info: $themeInfo;
+:root {
+  --el-color-primary: #{$themePrimary};
+  --el-color-primary-dark-2: #{$themePrimaryDark};
+  --el-color-primary-light-3: #7c75ec;
+  --el-color-primary-light-5: #a7a3f2;
+  --el-color-primary-light-7: #d3d1f8;
+  --el-color-primary-light-8: #e5e4fb;
+  --el-color-primary-light-9: #f1f0fd;
 
-$--button-font-weight: $fontWeightMedium;
+  --el-color-success: #{$themeSuccess};
+  --el-color-warning: #{$themeWarning};
+  --el-color-danger: #{$themeDanger};
+  --el-color-info: #{$themeInfo};
 
-$--border-color-light: $slate200;
-$--border-color-lighter: $slate100;
+  --el-border-radius-base: 10px;
+}
 
-$--table-border: 1px solid #dfe6ec;
-
-/* 全局字体（Element 部分组件会用到） */
-$--font-path: "~element-ui/lib/theme-chalk/fonts";
-
-@import "~element-ui/packages/theme-chalk/src/index";
-
+// 供 ThemePicker 等读取当前主题色
 :export {
-  theme: $--color-primary;
+  theme: $themePrimary;
 }

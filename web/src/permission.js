@@ -1,6 +1,6 @@
 import router from './router'
 import store from './store'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
 import NProgress from 'nprogress' // progress bar
 import 'nprogress/nprogress.css' // progress bar style
 import { getToken } from '@/utils/auth' // get token from cookie
@@ -50,9 +50,9 @@ router.beforeEach(async(to, from, next) => {
           // generate accessible routes map based on roles
           const accessRoutes = await store.dispatch('permission/generateRoutes', userinfoForRoutes)
 
-          accessRoutes.push({ path: '*', redirect: '/404', hidden: true })
-          // dynamically add accessible routes
-          router.addRoutes(accessRoutes)
+          accessRoutes.push({ path: '/:pathMatch(.*)*', redirect: '/404', hidden: true })
+          // dynamically add accessible routes（vue-router 4 用 addRoute 逐条添加）
+          accessRoutes.forEach(route => router.addRoute(route))
 
           // hack method to ensure that addRoutes is complete
           // set the replace: true, so the navigation will not leave a history record
@@ -74,7 +74,7 @@ router.beforeEach(async(to, from, next) => {
       // 在免费登录白名单，直接去
       next()
     } else if (to.path === '/changePass') {
-      next({ replace: true })
+      next()
       // NProgress.done()
     } else {
       // other pages that do not have permission to access are redirected to the login page.

@@ -1,10 +1,7 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-
-Vue.use(Router)
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 /* Layout */
-import Layout from '@/layout'
+import Layout from '@/layout/index.vue'
 
 /* Router Modules */
 
@@ -50,14 +47,14 @@ export const constantRoutes = [
     children: [
       {
         path: '/redirect/:path(.*)',
-        component: () => import('@/views/redirect/index')
+        component: () => import('@/views/redirect/index.vue')
       },
       
     ]
   },
   {
     path: '/login',
-    component: () => import('@/views/login/index'),
+    component: () => import('@/views/login/index.vue'),
     hidden: true
   },
   {
@@ -65,7 +62,7 @@ export const constantRoutes = [
       name:'changePass',
       hidden: true,
       meta: { title: '忘记密码', icon: 'user', noCache: true },
-      component: () => import('@/views/changePassword/index'),
+      component: () => import('@/views/changePassword/index.vue'),
   },
   {
     path: '/404',
@@ -85,7 +82,7 @@ export const constantRoutes = [
     children: [
       {
         path: 'dashboard',
-        component: () => import('@/views/dashboard/index'),
+        component: () => import('@/views/dashboard/index.vue'),
         name: 'Dashboard',
         meta: { title: '首页', icon: 'dashboard', affix: true }
       }
@@ -100,7 +97,7 @@ export const constantRoutes = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/profile/index'),
+        component: () => import('@/views/profile/index.vue'),
         name: 'Profile',
         meta: { title: '个人中心', icon: 'user', noCache: true }
       },
@@ -115,7 +112,7 @@ export const constantRoutes = [
     children: [
       {
         path: '/userList',
-        component: () => import('@/views/groupUser/userList/index'),
+        component: () => import('@/views/groupUser/userList/index.vue'),
         name: 'userList',
         meta: { title: '分组成员', icon: 'user', noCache: true }
       }
@@ -130,18 +127,26 @@ export const constantRoutes = [
  * the routes that need to be dynamically loaded based on user roles
  */
 
-const createRouter = () => new Router({
-  // mode: 'history', // require service support
-  scrollBehavior: () => ({ y: 0 }),
+const router = createRouter({
+  history: createWebHashHistory(),
+  scrollBehavior: () => ({ top: 0 }),
   routes: constantRoutes
 })
 
-const router = createRouter()
+// 收集 constantRoutes 的名字，resetRouter 时只移除动态新增的路由
+const constantRouteNames = new Set()
+constantRoutes.forEach(r => {
+  if (r.name) constantRouteNames.add(r.name)
+  ;(r.children || []).forEach(c => c.name && constantRouteNames.add(c.name))
+})
 
-// Detail see: https://github.com/vuejs/vue-router/issues/1234#issuecomment-357941465
 export function resetRouter() {
-  const newRouter = createRouter()
-  router.matcher = newRouter.matcher // reset router
+  router.getRoutes().forEach(route => {
+    const { name } = route
+    if (name && !constantRouteNames.has(name)) {
+      router.removeRoute(name)
+    }
+  })
 }
 
 export default router

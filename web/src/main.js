@@ -1,40 +1,52 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 
 import Cookies from 'js-cookie'
 
 import 'normalize.css/normalize.css' // a modern alternative to CSS resets
 
-import Element from 'element-ui'
-import './styles/element-variables.scss'
-// import enLang from 'element-ui/lib/locale/lang/en'// 如果使用中文语言包请默认支持，无需额外引入，请删除该依赖
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox, ElNotification, ElLoading } from 'element-plus'
 
+import '@/styles/element-variables.scss' // 主题色（CSS 变量覆盖）
 import '@/styles/index.scss' // global css
 
-import App from './App'
+import App from './App.vue'
 import store from './store'
 import router from './router'
 
-import './icons' // icon
+import 'virtual:svg-icons-register' // svg sprite
 import './permission' // permission control
-import './utils/error-log' // error log
+import setupErrorLog from './utils/error-log'
+import SvgIcon from '@/components/SvgIcon/index.vue'
 
-import * as filters from './filters' // global filters
+const app = createApp(App)
 
-Vue.use(Element, {
-  size: Cookies.get('size') || 'medium' // set element-ui default size
-  // locale: enLang // 如果使用中文，无需设置，请删除
+// 全局注册 Element Plus 图标（用法：<el-icon><Edit /></el-icon>）
+for (const [key, comp] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, comp)
+}
+// 全局 svg-icon 组件
+app.component('SvgIcon', SvgIcon)
+
+app.use(store)
+app.use(router)
+app.use(ElementPlus, {
+  locale: zhCn,
+  size: Cookies.get('size') || 'default'
 })
 
-// register global utility filters
-Object.keys(filters).forEach(key => {
-  Vue.filter(key, filters[key])
-})
+// 兼容 Options API 中 element-ui 风格的 this.$message / this.$confirm 等调用
+app.config.globalProperties.$message = ElMessage
+app.config.globalProperties.$msgbox = ElMessageBox
+app.config.globalProperties.$alert = ElMessageBox.alert
+app.config.globalProperties.$confirm = ElMessageBox.confirm
+app.config.globalProperties.$prompt = ElMessageBox.prompt
+app.config.globalProperties.$notify = ElNotification
+app.config.globalProperties.$loading = ElLoading.service
 
-Vue.config.productionTip = false
+setupErrorLog(app)
 
-new Vue({
-  el: '#app',
-  router,
-  store,
-  render: h => h(App)
-})
+app.mount('#app')

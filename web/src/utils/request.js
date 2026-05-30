@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { MessageBox, Message } from 'element-ui'
+import { ElMessageBox as MessageBox, ElMessage as Message } from 'element-plus'
 import store from '@/store'
 // import router from '@/router'
 import { getToken } from '@/utils/auth'
@@ -7,7 +7,7 @@ import router from '@/router'
 
 // create an axios instance
 const service = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' ? process.env.VUE_APP_BASE_API : '/', // api 的 base_url
+  baseURL: import.meta.env.PROD ? (import.meta.env.VITE_APP_BASE_API || '/') : '/', // api 的 base_url
   // withCredentials: true, // send cookies when cross-domain requests
   // timeout: 5000 // request timeout
 })
