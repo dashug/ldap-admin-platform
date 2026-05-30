@@ -230,12 +230,13 @@ export default {
         margin-right: 16px;
       }
       &.active {
-        background-color: $themePrimary;
-        color: #fff;
-        border-color: $themePrimary;
+        background-color: rgba($themePrimary, 0.10);
+        color: $themePrimary;
+        border-color: rgba($themePrimary, 0.20);
+        font-weight: $fontWeightMedium;
         &::before {
           content: '';
-          background: #fff;
+          background: $themePrimary;
           display: inline-block;
           width: 6px;
           height: 6px;

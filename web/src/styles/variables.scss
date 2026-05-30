@@ -38,25 +38,25 @@ $sideBarWidth: 240px;
 $sidebarCollapseWidth: 72px;
 $contentBg: $slate50;
 $contentPadding: 24px;
-$cardRadius: 16px;
-$cardRadiusSm: 12px;
-$cardShadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-$cardShadowHover: 0 8px 24px rgba(0, 0, 0, 0.08);
+$cardRadius: 12px;
+$cardRadiusSm: 10px;
+$cardShadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+$cardShadowHover: 0 4px 16px rgba(15, 23, 42, 0.06);
 $borderColor: $slate200;
 $transitionBase: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-// ========== 侧栏（深色现代） ==========
-$menuText: $slate400;
-$menuActiveText: #fff;
-$subMenuActiveText: $slate200;
+// ========== 侧栏（浅色极简 / Linear 风） ==========
+$menuText: $slate600;
+$menuActiveText: $themePrimary;
+$subMenuActiveText: $slate800;
 
-$menuBg: $slate900;
-$menuHover: $slate800;
-$menuActiveBg: rgba($themePrimary, 0.2);
+$menuBg: #ffffff;
+$menuHover: $slate100;
+$menuActiveBg: rgba($themePrimary, 0.10);
 $menuActiveBorder: $themePrimary;
 
-$subMenuBg: #0c1222;
-$subMenuHover: $slate800;
+$subMenuBg: #ffffff;
+$subMenuHover: $slate100;
 
 // ========== 兼容旧变量名 ==========
 $blue: $slate700;

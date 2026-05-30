@@ -3,24 +3,52 @@
 // 导致 plain 主色按钮出现「同色文字盖在实色背景上」而文字不可见）
 @import './variables.scss';
 
-/* 表格 */
+/* 表格：无边框 + 细分割线 + 浅表头（Linear/shadcn 风） */
 .el-table {
-  border-radius: $cardRadius;
-  overflow: hidden;
+  font-size: $fontSizeSmall;
+  // 去掉外/底/竖向边框
   &::before { display: none; }
-  th {
+  &.el-table--border {
+    border: none;
+    &::after, &::before { display: none; }
+    .el-table__cell { border-right: none; }
+  }
+  .el-table__inner-wrapper::before { display: none; }
+
+  th.el-table__cell {
     background: $slate50 !important;
-    color: $slate600;
+    color: $slate500;
     font-weight: $fontWeightSemibold;
-    font-size: $fontSizeSmall;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    border-bottom: 1px solid $slate200 !important;
+    padding: 10px 0;
   }
-  .el-table__body tr:hover > td {
+  td.el-table__cell {
+    color: $slate700;
+    border-bottom: 1px solid $slate100 !important;
+    padding: 11px 0;
+  }
+  .el-table__body tr:hover > td.el-table__cell {
     background: $slate50 !important;
   }
-  td { font-size: $fontSizeSmall; color: $slate700; }
 }
-.el-table--striped .el-table__body tr.el-table__row--striped td {
-  background: #fafbfc;
+// 取消斑马纹，仅用细分割线
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background: transparent;
+}
+
+/* 表格行内操作按钮：改为幽灵图标（去掉实色圆底，仅彩色图标 + 浅灰 hover） */
+.el-table .cell .el-button.is-circle {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  &:hover { background: $slate100 !important; }
+  &.el-button--primary { color: $themePrimary !important; }
+  &.el-button--danger { color: $themeDanger !important; }
+  &.el-button--warning { color: $themeWarning !important; }
+  &.el-button--success { color: $themeSuccess !important; }
+  &.el-button--info { color: $themeInfo !important; }
 }
 
 /* 对话框 */
@@ -42,15 +70,27 @@
 }
 
 /* 输入、按钮圆角 */
-.el-input__inner,
+.el-input__wrapper,
 .el-textarea__inner {
-  border-radius: 10px;
+  border-radius: 8px;
+}
+.el-textarea__inner {
   border-color: $slate200;
-  &:focus { border-color: $themePrimary; }
 }
 .el-button {
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: $fontWeightMedium;
+}
+
+/* 卡片：扁平 + 细边框 + 轻阴影 */
+.el-card {
+  border-radius: $cardRadius;
+  border: 1px solid $borderColor;
+  box-shadow: $cardShadow !important;
+  transition: box-shadow $transitionBase;
+}
+.container-card {
+  &:hover { box-shadow: $cardShadowHover !important; }
 }
 
 .el-breadcrumb__inner,
