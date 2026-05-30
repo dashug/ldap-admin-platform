@@ -27,3 +27,9 @@ npm-debug.log*
 
 # 通用
 dist
+
+# 个人/本地操作脚本与笔记（不应进入仓库，可能泄露本地路径）
+上传到GitHub*.md
+重新上传到GitHub*.sh
+提交并推送到GitHub*.sh
+rewrite-git-author.sh
