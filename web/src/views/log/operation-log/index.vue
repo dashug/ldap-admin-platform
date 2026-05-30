@@ -1,59 +1,24 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <el-form size="small" :inline="true" :model="params" class="demo-form-inline">
-        <el-form-item label="请求人">
-          <el-input
-            v-model.trim="params.username"
-            clearable
-            placeholder="请求人"
-            @keyup.enter="search"
-            @clear="search"
-          />
-        </el-form-item>
-        <el-form-item label="IP地址">
-          <el-input v-model.trim="params.ip" clearable placeholder="IP地址" @keyup.enter="search" @clear="search" />
-        </el-form-item>
-        <el-form-item label="请求路径">
-          <el-input
-            v-model.trim="params.path"
-            clearable
-            placeholder="请求路径"
-            @keyup.enter="search"
-            @clear="search"
-          />
-        </el-form-item>
-        <el-form-item prop="method" label="请求方式">
-          <el-select v-model="params.method" placeholder="请选择请求状态" clearable @change="search" @clear="search">
-            <el-option v-for="item in RequestList" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
+    <page-header title="操作日志" subtitle="记录关键操作，便于审计与排查">
+      <template #actions>
+        <el-button plain type="danger" icon="Delete" @click="handleClean">清空日志</el-button>
+      </template>
+    </page-header>
 
-        <el-form-item label="请求状态">
-          <el-input
-            v-model.trim="params.status"
-            clearable
-            placeholder="请求状态"
-            @keyup.enter="search"
-            @clear="search"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="Search" type="primary" @click="search">查询</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button
-            :disabled="multipleSelection.length === 0"
-            :loading="loading"
-            icon="Delete"
-            type="danger"
-            @click="batchDelete"
-          >批量删除</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="danger" plain icon="Delete" size="small" @click="handleClean">清空日志</el-button>
-        </el-form-item>
-      </el-form>
+    <el-card class="container-card" shadow="never">
+      <div class="filter-bar">
+        <el-input v-model.trim="params.username" prefix-icon="Search" clearable placeholder="请求人" style="width: 150px;" @keyup.enter="search" @clear="search" />
+        <el-input v-model.trim="params.ip" clearable placeholder="IP 地址" style="width: 140px;" @keyup.enter="search" @clear="search" />
+        <el-input v-model.trim="params.path" clearable placeholder="请求路径" style="width: 180px;" @keyup.enter="search" @clear="search" />
+        <el-select v-model="params.method" placeholder="请求方式" clearable style="width: 120px;" @change="search" @clear="search">
+          <el-option v-for="item in RequestList" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+        <el-input v-model.trim="params.status" clearable placeholder="状态码" style="width: 110px;" @keyup.enter="search" @clear="search" />
+        <el-button :loading="loading" icon="Search" @click="search">查询</el-button>
+        <div class="filter-bar__spacer" />
+        <el-button :disabled="multipleSelection.length === 0" :loading="loading" plain type="danger" icon="Delete" @click="batchDelete">批量删除</el-button>
+      </div>
 
       <el-table
         v-loading="loading"
@@ -124,9 +89,11 @@
 import { getOperationLogs, batchDeleteOperationLogByIds, CleanOperationLog } from '@/api/log/operationLog'
 import { parseGoTime } from '@/utils/index'
 import { ElMessage as Message } from 'element-plus'
+import PageHeader from '@/components/PageHeader/index.vue'
 
 export default {
   name: 'OperationLog',
+  components: { PageHeader },
   data() {
     return {
       // 查询参数

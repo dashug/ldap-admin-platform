@@ -1,11 +1,12 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <el-form size="small" :inline="true" class="demo-form-inline">
-        <el-form-item>
-          <el-button :loading="loading" icon="Plus" type="primary" @click="openCreate">新建密钥</el-button>
-        </el-form-item>
-      </el-form>
+    <page-header title="API 密钥" subtitle="供第三方系统或脚本调用接口的访问密钥">
+      <template #actions>
+        <el-button type="primary" icon="Plus" @click="openCreate">新建密钥</el-button>
+      </template>
+    </page-header>
+
+    <el-card class="container-card" shadow="never">
 
       <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%">
         <el-table-column show-overflow-tooltip prop="name" label="名称" />
@@ -75,9 +76,11 @@
 <script>
 import { getApiKeyList, createApiKey, deleteApiKey } from '@/api/system/apiKey'
 import { ElMessage as Message } from 'element-plus'
+import PageHeader from '@/components/PageHeader/index.vue'
 
 export default {
   name: 'ApiKey',
+  components: { PageHeader },
   data() {
     return {
       params: {

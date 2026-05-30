@@ -1,51 +1,25 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <div class="page-tip">
-        <p>同步钉钉/企微/飞书用户或分组时，用此处配置「第三方字段名 → 本系统属性」的对应关系；若同步规则中选择了「按字段关联」生成用户名，会按本页配置取值。</p>
+    <page-header title="同步字段映射" subtitle="配置「第三方字段名 → 本系统属性」的对应关系">
+      <template #actions>
+        <el-button type="primary" icon="Plus" @click="create">新建映射</el-button>
+      </template>
+    </page-header>
+
+    <el-card class="container-card" shadow="never">
+      <el-alert
+        type="info"
+        :closable="false"
+        show-icon
+        title="同步钉钉/企微/飞书用户或分组时，用此处配置字段对应关系；若同步规则选择「按字段关联」生成用户名，会按本页配置取值。"
+        style="margin-bottom: 16px;"
+      />
+      <div class="filter-bar">
+        <el-input v-model.trim="params.flag" prefix-icon="Search" clearable placeholder="搜索字段标识（如 feishu_user）" style="width: 280px;" @keyup.enter="search" @clear="search" />
+        <el-button :loading="loading" icon="Search" @click="search">查询</el-button>
+        <div class="filter-bar__spacer" />
+        <el-button :disabled="multipleSelection.length === 0" :loading="loading" plain type="danger" icon="Delete" @click="batchDelete">批量删除</el-button>
       </div>
-      <el-form
-        size="small"
-        :inline="true"
-        :model="params"
-        class="demo-form-inline"
-      >
-        <el-form-item label="字段标识">
-          <el-input
-            v-model.trim="params.flag"
-            clearable
-            placeholder="如 feishu_user、dingtalk_group"
-            @keyup.enter="search"
-            @clear="search"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button
-            :loading="loading"
-            icon="Search"
-            type="primary"
-            @click="search"
-          >查询</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button
-            :loading="loading"
-            icon="Plus"
-            type="warning"
-            @click="create"
-          >新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button
-            :disabled="multipleSelection.length === 0"
-            :loading="loading"
-            icon="Delete"
-            type="danger"
-            @click="batchDelete"
-          >批量删除</el-button>
-        </el-form-item>
-        <br>
-      </el-form>
 
       <el-table
         v-loading="loading"
@@ -460,12 +434,13 @@ import {
   relationDel
 } from '@/api/personnel/fieldRelation'
 import { ElMessage as Message } from 'element-plus'
+import PageHeader from '@/components/PageHeader/index.vue'
 
 const cityOptions = ['用户字段动态关联', '分组字段动态关联']
 export default {
   name: 'FieldRelation',
   components: {
-    // Treeselect
+    PageHeader
   },
   filters: {
     methodTagFilter(val) {

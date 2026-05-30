@@ -1,35 +1,27 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <el-form size="small" :inline="true" :model="params" class="demo-form-inline">
-        <el-form-item label="访问路径">
-          <el-input v-model.trim="params.path" clearable placeholder="访问路径" @keyup.enter="search" @clear="search" />
-        </el-form-item>
-        <el-form-item label="所属类别">
-          <el-input v-model.trim="params.category" clearable placeholder="所属类别" @keyup.enter="search" @clear="search" />
-        </el-form-item>
-        <el-form-item label="请求方法">
-          <el-select v-model.trim="params.method" clearable placeholder="请求方式" @change="search" @clear="search">
-            <el-option label="GET[获取资源]" value="GET" />
-            <el-option label="POST[新增资源]" value="POST" />
-            <el-option label="PUT[全部更新]" value="PUT" />
-            <el-option label="PATCH[增量更新]" value="PATCH" />
-            <el-option label="DELETE[删除资源]" value="DELETE" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="创建人">
-          <el-input v-model.trim="params.creator" clearable placeholder="创建人" @keyup.enter="search" @clear="search" />
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="Search" type="primary" @click="search">查询</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="Plus" type="warning" @click="create">新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="Delete" type="danger" @click="batchDelete">批量删除</el-button>
-        </el-form-item>
-      </el-form>
+    <page-header title="接口管理" subtitle="管理可被 RBAC 授权的后端 API 接口">
+      <template #actions>
+        <el-button type="primary" icon="Plus" @click="create">新建接口</el-button>
+      </template>
+    </page-header>
+
+    <el-card class="container-card" shadow="never">
+      <div class="filter-bar">
+        <el-input v-model.trim="params.path" prefix-icon="Search" clearable placeholder="搜索访问路径" style="width: 200px;" @keyup.enter="search" @clear="search" />
+        <el-input v-model.trim="params.category" clearable placeholder="所属类别" style="width: 130px;" @keyup.enter="search" @clear="search" />
+        <el-select v-model.trim="params.method" clearable placeholder="请求方式" style="width: 130px;" @change="search" @clear="search">
+          <el-option label="GET" value="GET" />
+          <el-option label="POST" value="POST" />
+          <el-option label="PUT" value="PUT" />
+          <el-option label="PATCH" value="PATCH" />
+          <el-option label="DELETE" value="DELETE" />
+        </el-select>
+        <el-input v-model.trim="params.creator" clearable placeholder="创建人" style="width: 120px;" @keyup.enter="search" @clear="search" />
+        <el-button :loading="loading" icon="Search" @click="search">查询</el-button>
+        <div class="filter-bar__spacer" />
+        <el-button :disabled="multipleSelection.length === 0" :loading="loading" plain type="danger" icon="Delete" @click="batchDelete">批量删除</el-button>
+      </div>
 
       <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
@@ -102,9 +94,11 @@
 <script>
 import { getApis, createApi, updateApiById, batchDeleteApiByIds } from '@/api/system/api'
 import { ElMessage as Message } from 'element-plus'
+import PageHeader from '@/components/PageHeader/index.vue'
 
 export default {
   name: 'Api',
+  components: { PageHeader },
   data() {
     return {
       // 查询参数

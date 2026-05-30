@@ -1,14 +1,13 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <el-form size="small" :inline="true" class="demo-form-inline">
-        <el-form-item>
-          <el-button :loading="loading" icon="Plus" type="warning" @click="create">新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="Delete" type="danger" @click="batchDelete">批量删除</el-button>
-        </el-form-item>
-      </el-form>
+    <page-header title="菜单管理" subtitle="维护后台导航菜单与层级结构">
+      <template #actions>
+        <el-button :disabled="multipleSelection.length === 0" :loading="loading" plain type="danger" icon="Delete" @click="batchDelete">批量删除</el-button>
+        <el-button type="primary" icon="Plus" @click="create">新建菜单</el-button>
+      </template>
+    </page-header>
+
+    <el-card class="container-card" shadow="never">
 
       <el-table v-loading="loading" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" row-key="ID" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
@@ -143,11 +142,13 @@
 import IconSelect from '@/components/IconSelect'
 import { getMenuTree, createMenu, updateMenuById, batchDeleteMenuByIds } from '@/api/system/menu'
 import { ElMessage as Message } from 'element-plus'
+import PageHeader from '@/components/PageHeader/index.vue'
 
 export default {
   name: 'Menu',
   components: {
-    IconSelect
+    IconSelect,
+    PageHeader
   },
   data() {
     return {

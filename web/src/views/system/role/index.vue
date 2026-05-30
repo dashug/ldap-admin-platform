@@ -1,29 +1,23 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <el-form size="small" :inline="true" :model="params" class="demo-form-inline">
-        <el-form-item label="角色名称">
-          <el-input v-model.trim="params.name" clearable placeholder="角色名称" @keyup.enter="search" @clear="search" />
-        </el-form-item>
-        <el-form-item label="关键字">
-          <el-input v-model.trim="params.keyword" clearable placeholder="关键字" @keyup.enter="search" @clear="search" />
-        </el-form-item>
-        <el-form-item label="角色状态">
-          <el-select v-model.trim="params.status" clearable placeholder="角色状态" @change="search" @clear="search">
-            <el-option label="正常" :value="1" />
-            <el-option label="禁用" :value="2" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="Search" type="primary" @click="search">查询</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="Plus" type="warning" @click="create">新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="Delete" type="danger" @click="batchDelete">批量删除</el-button>
-        </el-form-item>
-      </el-form>
+    <page-header title="角色与权限" subtitle="管理角色及其菜单 / 接口权限">
+      <template #actions>
+        <el-button type="primary" icon="Plus" @click="create">新建角色</el-button>
+      </template>
+    </page-header>
+
+    <el-card class="container-card" shadow="never">
+      <div class="filter-bar">
+        <el-input v-model.trim="params.name" prefix-icon="Search" clearable placeholder="搜索角色名称" style="width: 200px;" @keyup.enter="search" @clear="search" />
+        <el-input v-model.trim="params.keyword" clearable placeholder="关键字" style="width: 150px;" @keyup.enter="search" @clear="search" />
+        <el-select v-model.trim="params.status" clearable placeholder="状态" style="width: 110px;" @change="search" @clear="search">
+          <el-option label="正常" :value="1" />
+          <el-option label="禁用" :value="2" />
+        </el-select>
+        <el-button :loading="loading" icon="Search" @click="search">查询</el-button>
+        <div class="filter-bar__spacer" />
+        <el-button :disabled="multipleSelection.length === 0" :loading="loading" plain type="danger" icon="Delete" @click="batchDelete">批量删除</el-button>
+      </div>
 
       <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
@@ -139,9 +133,11 @@ import { getRoles, createRole, updateRoleById, batchDeleteRoleByIds, getRoleMenu
 import { getMenuTree } from '@/api/system/menu'
 import { getApiTree } from '@/api/system/api'
 import { ElMessage as Message } from 'element-plus'
+import PageHeader from '@/components/PageHeader/index.vue'
 
 export default {
   name: 'Role',
+  components: { PageHeader },
   data() {
     return {
       // 查询参数
