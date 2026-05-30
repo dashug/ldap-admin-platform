@@ -1,46 +1,69 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
+	"github.com/dashug/ldap-admin-platform/config"
 	"github.com/gin-gonic/gin"
 )
 
+// 允许跨域携带的请求头
+const corsAllowHeaders = "Authorization, Content-Length, X-CSRF-Token, Token, session, X_Requested_With, " +
+	"Accept, Origin, Host, Connection, Accept-Encoding, Accept-Language, DNT, X-CustomHeader, Keep-Alive, " +
+	"User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-Type, Pragma, X-API-Key"
+
 // CORS跨域中间件
+//
+// 安全策略（由 config.system.allow-origins 控制）：
+//   - 为空（默认）：单二进制同源部署，不下发任何跨域响应头，浏览器按同源策略拒绝跨站请求；
+//   - ["*"]      ：放行所有来源（兼容旧行为，仅在确有需要时使用，且不允许携带 Cookie 凭证）；
+//   - 指定来源    ：仅对命中白名单的 Origin 回显该来源，并允许携带凭证。
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		method := c.Request.Method               //请求方法
-		origin := c.Request.Header.Get("Origin") //请求头部
-		var headerKeys []string                  // 声明请求头keys
-		for k := range c.Request.Header {
-			headerKeys = append(headerKeys, k)
+		origin := c.Request.Header.Get("Origin")
+		allowed, allowCredentials := resolveAllowOrigin(origin)
+
+		if allowed != "" {
+			c.Header("Access-Control-Allow-Origin", allowed)
+			c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
+			c.Header("Access-Control-Allow-Headers", corsAllowHeaders)
+			c.Header("Access-Control-Expose-Headers", "Content-Length, Content-Type")
+			c.Header("Access-Control-Max-Age", "172800")
+			if allowCredentials {
+				c.Header("Access-Control-Allow-Credentials", "true")
+			}
+			// 按 Origin 变化缓存，避免 CDN/代理把某一来源的响应头串给其他来源
+			c.Header("Vary", "Origin")
 		}
-		headerStr := strings.Join(headerKeys, ", ")
-		if headerStr != "" {
-			headerStr = fmt.Sprintf("access-control-allow-origin, access-control-allow-headers, %s", headerStr)
-		} else {
-			headerStr = "access-control-allow-origin, access-control-allow-headers"
+
+		// 预检请求直接放行结束
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
 		}
-		if origin != "" {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-			c.Header("Access-Control-Allow-Origin", "*")                                       // 这是允许访问所有域
-			c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE,UPDATE") //服务器支持的所有跨域请求的方法,为了避免浏览次请求的多次'预检'请求
-			//  header的类型
-			c.Header("Access-Control-Allow-Headers", "Authorization, Content-Length, X-CSRF-Token, Token,session,X_Requested_With,Accept, Origin, Host, Connection, Accept-Encoding, Accept-Language,DNT, X-CustomHeader, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-Type, Pragma")
-			//              允许跨域设置                                                                                                      可以返回其他子段
-			c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers,Cache-Control,Content-Language,Content-Type,Expires,Last-Modified,Pragma,FooBar") // 跨域关键设置 让浏览器可以解析
-			c.Header("Access-Control-Max-Age", "172800")                                                                                                                                                           // 缓存请求信息 单位为秒
-			c.Header("Access-Control-Allow-Credentials", "false")                                                                                                                                                  //  跨域请求是否需要带cookie信息 默认设置为true
-			c.Set("content-type", "application/json")                                                                                                                                                              // 设置返回格式是json
-		}
-		//放行所有OPTIONS方法
-		if method == "OPTIONS" {
-			c.JSON(http.StatusOK, "Options Request!")
-		}
-		// 处理请求
-		c.Next() //  处理请求
-		_ = headerStr
+
+		c.Next()
 	}
+}
+
+// resolveAllowOrigin 根据白名单决定 Access-Control-Allow-Origin 的取值。
+// 返回空字符串表示不下发跨域头（同源场景）。
+func resolveAllowOrigin(origin string) (allowOrigin string, allowCredentials bool) {
+	if origin == "" {
+		return "", false
+	}
+	var allowList []string
+	if config.Conf.System != nil {
+		allowList = config.Conf.System.AllowOrigins
+	}
+	for _, o := range allowList {
+		if o == "*" {
+			// 通配模式：不允许携带凭证（浏览器禁止 * 与 credentials 同时出现）
+			return "*", false
+		}
+		if o == origin {
+			return origin, true
+		}
+	}
+	return "", false
 }

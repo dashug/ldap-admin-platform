@@ -12,6 +12,11 @@ system:
   inactive-days: 0
   # 用户/部门创建或同步后 HTTP 回调地址，空则不发
   webhook-url: ''
+  # 允许跨域访问的来源白名单（CORS）。单二进制同源部署时留空即可（最安全）。
+  #  - 留空            ：不下发任何跨域响应头，仅允许同源访问
+  #  - ['*']          ：放行所有来源（不携带 Cookie 凭证，仅在确有需要时使用）
+  #  - 指定具体来源     ：如 ['https://ldap.example.com', 'http://localhost:9527']
+  allow-origins: []
 
 logs:
   # 日志等级(-1:Debug, 0:Info, 1:Warn, 2:Error, 3:DPanic, 4:Panic, 5:Fatal, -1<=level<=5, 参照zap.level源码)
