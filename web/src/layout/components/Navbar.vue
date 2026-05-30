@@ -64,9 +64,7 @@ export default {
   height: $headerHeight;
   overflow: hidden;
   position: relative;
-  background: #fff;
-  border-bottom: 1px solid $borderColor;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: transparent;
   display: flex;
   align-items: center;
   padding: 0 24px;

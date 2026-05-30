@@ -3,7 +3,7 @@
   .main-container {
     min-height: 100%;
     transition: margin-left $transitionBase;
-    margin-left: $sideBarWidth;
+    margin-left: calc(#{$sideBarWidth} + 28px);
     position: relative;
     background: $contentBg;
   }
@@ -12,14 +12,16 @@
     transition: width $transitionBase;
     width: $sideBarWidth !important;
     background: #0f172a;
-    height: 100%;
+    height: auto;
     position: fixed;
     font-size: 0;
-    top: 0;
-    bottom: 0;
-    left: 0;
+    top: 14px;
+    bottom: 14px;
+    left: 14px;
     z-index: 1001;
     overflow: hidden;
+    border-radius: 18px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
 
     .horizontal-collapse-transition {
       transition: 0s width ease-in-out, 0s padding-left ease-in-out, 0s padding-right ease-in-out;
@@ -144,7 +146,7 @@
     }
 
     .main-container {
-      margin-left: $sidebarCollapseWidth;
+      margin-left: calc(#{$sidebarCollapseWidth} + 28px);
     }
 
     .submenu-title-noDropdown {
@@ -210,7 +212,7 @@
     &.hideSidebar .sidebar-container {
       pointer-events: none;
       transition-duration: 0.3s;
-      transform: translate3d(-$sideBarWidth, 0, 0);
+      transform: translate3d(calc(-#{$sideBarWidth} - 20px), 0, 0);
     }
   }
 
