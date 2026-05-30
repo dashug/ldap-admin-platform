@@ -16,8 +16,8 @@
               </div>
               <div class="header-name header-search">
                 <el-input v-model.trim="transParams.nickname" clearable placeholder="用户名" @input="onInput($event)" />
-                <el-button class="search-btn" :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
-                <el-button class="search-btn" :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-delete" type="danger" @click="batchDelete">移除</el-button>
+                <el-button class="search-btn" :loading="loading" icon="Search" type="primary" @click="search">查询</el-button>
+                <el-button class="search-btn" :disabled="multipleSelection.length === 0" :loading="loading" icon="Delete" type="danger" @click="batchDelete">移除</el-button>
               </div>
             </div>
             <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange">
@@ -42,8 +42,8 @@
               </div>
               <div class="header-name header-search">
                 <el-input v-model.trim="transParams.nickname" clearable placeholder="用户名" @input="onInput($event)" />
-                <el-button class="search-btn" :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
-                <el-button class="search-btn" :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-edit" type="primary" @click="batchAdd">添加</el-button>
+                <el-button class="search-btn" :loading="loading" icon="Search" type="primary" @click="search">查询</el-button>
+                <el-button class="search-btn" :disabled="multipleSelection.length === 0" :loading="loading" icon="Edit" type="primary" @click="batchAdd">添加</el-button>
               </div>
             </div>
             <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange">
@@ -64,7 +64,7 @@
 
 <script>
 import { useGroupList, useGroupRole, groupInfo, delGroup } from '@/api/personnel/group'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
 
 export default {
   name: 'Group',

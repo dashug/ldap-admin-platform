@@ -8,12 +8,12 @@
       <el-form ref="form" :model="form" size="medium" class="form-container">
         <el-form-item label="邮箱">
           <div class="input-container">
-            <el-input v-model="form.mail" placeholder="请输入个人邮箱" prefix-icon="el-icon-message" />
+            <el-input v-model="form.mail" placeholder="请输入个人邮箱" prefix-icon="Message" />
             <el-button type="primary" @click="sendEmailCode">发送验证码</el-button>
           </div>
         </el-form-item>
         <el-form-item label="验证码" class="code-item">
-          <el-input v-model="form.code" placeholder="请输入验证码" prefix-icon="el-icon-mobile-phone" />
+          <el-input v-model="form.code" placeholder="请输入验证码" prefix-icon="Cellphone" />
         </el-form-item>
         <el-form-item class="reset-item">
           <el-button type="primary" class="submit-btn" @click="resetPass">重置密码</el-button>
@@ -28,7 +28,7 @@
 
 <script>
 import { emailPass,sendCode } from '@/api/system/user'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
 
 export default {
   name: 'ChangePass',
@@ -76,7 +76,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "~@/styles/variables.scss";
+@import "@/styles/variables.scss";
 
 .reset-pass {
   min-height: 100vh;

@@ -15,14 +15,14 @@
             v-model.trim="params.flag"
             clearable
             placeholder="如 feishu_user、dingtalk_group"
-            @keyup.enter.native="search"
+            @keyup.enter="search"
             @clear="search"
           />
         </el-form-item>
         <el-form-item>
           <el-button
             :loading="loading"
-            icon="el-icon-search"
+            icon="Search"
             type="primary"
             @click="search"
           >查询</el-button>
@@ -30,7 +30,7 @@
         <el-form-item>
           <el-button
             :loading="loading"
-            icon="el-icon-plus"
+            icon="Plus"
             type="warning"
             @click="create"
           >新增</el-button>
@@ -39,7 +39,7 @@
           <el-button
             :disabled="multipleSelection.length === 0"
             :loading="loading"
-            icon="el-icon-delete"
+            icon="Delete"
             type="danger"
             @click="batchDelete"
           >批量删除</el-button>
@@ -79,7 +79,7 @@
           label="字段标识"
         />
         <el-table-column show-overflow-tooltip sortable label="字段属性">
-          <template slot-scope="props">
+          <template #default="props">
             <el-form>
               <el-form-item>
                 <span>{{ props.row.Attributes }}</span>
@@ -92,7 +92,7 @@
             <el-tooltip content="编辑" effect="dark" placement="top">
               <el-button
                 size="mini"
-                icon="el-icon-edit"
+                icon="Edit"
                 circle
                 type="primary"
                 @click="update(scope.row)"
@@ -106,15 +106,14 @@
             >
               <el-popconfirm
                 title="确定删除吗？"
-                @onConfirm="singleDelete(scope.row.ID)"
+                @confirm="singleDelete(scope.row.ID)"
               >
-                <el-button
-                  slot="reference"
+                <template #reference><el-button
                   size="mini"
-                  icon="el-icon-delete"
+                  icon="Delete"
                   circle
                   type="danger"
-                />
+                 /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
@@ -122,7 +121,7 @@
       </el-table>
 
       <!-- 新增 -->
-      <el-dialog :title="dialogFormTitle" :visible.sync="updateLoading">
+      <el-dialog :title="dialogFormTitle" v-model="updateLoading">
         <div class="components-container">
           <aside>动态关系管理说明文档参考： <a href="https://example.com/docs/field-relation" target="_blank">动态字段关系管理</a></aside>
         </div>
@@ -282,7 +281,7 @@
             </el-form-item>
           </template>
         </el-form>
-        <div slot="footer" class="dialog-footer">
+        <template #footer><div class="dialog-footer">
           <el-button size="mini" @click="cancelForm()">取 消</el-button>
           <el-button
             size="mini"
@@ -290,11 +289,11 @@
             type="primary"
             @click="submitForm('A')"
           >确 定</el-button>
-        </div>
+        </div></template>
       </el-dialog>
 
       <!-- 编辑 -->
-      <el-dialog :title="dialogFormTitle" :visible.sync="dialogFormVisible">
+      <el-dialog :title="dialogFormTitle" v-model="dialogFormVisible">
         <div class="components-container">
           <aside>动态关系管理说明文档参考： <a href="https://example.com/docs/field-relation" target="_blank">动态字段关系管理</a></aside>
         </div>
@@ -437,7 +436,7 @@
             </el-form-item>
           </template>
         </el-form>
-        <div slot="footer" class="dialog-footer">
+        <template #footer><div class="dialog-footer">
           <el-button size="mini" @click="cancelForm()">取 消</el-button>
           <el-button
             size="mini"
@@ -445,7 +444,7 @@
             type="primary"
             @click="submitForm('B')"
           >确 定</el-button>
-        </div>
+        </div></template>
       </el-dialog>
     </el-card>
   </div>
@@ -460,7 +459,7 @@ import {
   relationUp,
   relationDel
 } from '@/api/personnel/fieldRelation'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
 
 const cityOptions = ['用户字段动态关联', '分组字段动态关联']
 export default {

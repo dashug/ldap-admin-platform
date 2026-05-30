@@ -1,10 +1,10 @@
 <template>
   <div class="system-info-page">
     <el-card class="box-card" shadow="hover">
-      <div slot="header" class="card-header">
+      <template #header><div class="card-header">
         <span>系统信息</span>
-        <el-button type="text" icon="el-icon-refresh" @click="fetch">刷新</el-button>
-      </div>
+        <el-button type="text" icon="Refresh" @click="fetch">刷新</el-button>
+      </div></template>
       <el-descriptions v-loading="loading" :column="1" border>
         <el-descriptions-item label="版本号">{{ info.version && info.version.version ? info.version.version : '-' }}</el-descriptions-item>
         <el-descriptions-item label="Git 提交">{{ info.version && info.version.gitCommit ? info.version.gitCommit : '-' }}</el-descriptions-item>

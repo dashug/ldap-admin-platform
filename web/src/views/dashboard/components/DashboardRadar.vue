@@ -3,8 +3,8 @@
 </template>
 
 <script>
-import echarts from 'echarts'
-require('echarts/theme/macarons')
+import * as echarts from 'echarts'
+import 'echarts/theme/macarons'
 import { debounce } from '@/utils'
 
 export default {

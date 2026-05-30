@@ -1,9 +1,9 @@
 <template>
   <div>
     <el-card style="margin-bottom:20px;max-width: 580px;">
-      <div slot="header" class="clearfix">
+      <template #header><div class="clearfix">
         <span>修改账户密码</span>
-      </div>
+      </div></template>
 
       <el-form ref="dialogForm" size="small" :model="dialogFormData" :rules="dialogFormRules" label-width="100px">
 
@@ -42,7 +42,7 @@
 import { changePwd } from '@/api/system/user'
 import store from '@/store'
 import JSEncrypt from 'jsencrypt'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
 
 export default {
   data() {
@@ -77,7 +77,7 @@ export default {
           { required: true, validator: confirmPass, trigger: 'blur' }
         ]
       },
-      publicKey: process.env.VUE_APP_PUBLIC_KEY,
+      publicKey: import.meta.env.VITE_APP_PUBLIC_KEY,
       passwordTypeOld: 'password',
       passwordTypeNew: 'password',
       passwordTypeConfirm: 'password'

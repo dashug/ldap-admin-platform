@@ -24,7 +24,7 @@ import { mapGetters } from 'vuex'
 import Logo from './Logo'
 import SidebarItem from './SidebarItem'
 import Version from './Version'
-import variables from '@/styles/variables.scss'
+import variables from '@/styles/theme-vars'
 
 export default {
   components: { SidebarItem, Logo, Version },

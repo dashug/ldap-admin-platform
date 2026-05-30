@@ -7,19 +7,19 @@
             v-model.trim="params.username"
             clearable
             placeholder="请求人"
-            @keyup.enter.native="search"
+            @keyup.enter="search"
             @clear="search"
           />
         </el-form-item>
         <el-form-item label="IP地址">
-          <el-input v-model.trim="params.ip" clearable placeholder="IP地址" @keyup.enter.native="search" @clear="search" />
+          <el-input v-model.trim="params.ip" clearable placeholder="IP地址" @keyup.enter="search" @clear="search" />
         </el-form-item>
         <el-form-item label="请求路径">
           <el-input
             v-model.trim="params.path"
             clearable
             placeholder="请求路径"
-            @keyup.enter.native="search"
+            @keyup.enter="search"
             @clear="search"
           />
         </el-form-item>
@@ -34,24 +34,24 @@
             v-model.trim="params.status"
             clearable
             placeholder="请求状态"
-            @keyup.enter.native="search"
+            @keyup.enter="search"
             @clear="search"
           />
         </el-form-item>
         <el-form-item>
-          <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
+          <el-button :loading="loading" icon="Search" type="primary" @click="search">查询</el-button>
         </el-form-item>
         <el-form-item>
           <el-button
             :disabled="multipleSelection.length === 0"
             :loading="loading"
-            icon="el-icon-delete"
+            icon="Delete"
             type="danger"
             @click="batchDelete"
           >批量删除</el-button>
         </el-form-item>
         <el-form-item>
-          <el-button type="danger" plain icon="el-icon-delete" size="mini" @click="handleClean">清空日志</el-button>
+          <el-button type="danger" plain icon="Delete" size="mini" @click="handleClean">清空日志</el-button>
         </el-form-item>
       </el-form>
 
@@ -68,7 +68,7 @@
         <el-table-column show-overflow-tooltip sortable prop="ip" label="IP地址" />
         <el-table-column show-overflow-tooltip sortable prop="path" label="请求路径" />
         <el-table-column show-overflow-tooltip sortable prop="method" label="请求方式" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag v-if="scope.row.method === 'GET'" type="success">GET</el-tag>
             <el-tag v-else-if="scope.row.method === 'POST'" type="warning">POST</el-tag>
             <el-tag v-else-if="scope.row.method === 'PUT'" type="primary">PUT</el-tag>
@@ -77,28 +77,28 @@
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="status" label="请求状态" align="center">
-          <template slot-scope="scope">
-            <el-tag size="small" :type="scope.row.status | statusTagFilter" disable-transitions>{{ scope.row.status
+          <template #default="scope">
+            <el-tag size="small" :type="statusTagFilter(scope.row.status)" disable-transitions>{{ scope.row.status
             }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="startTime" label="发起时间">
-          <!-- <template slot-scope="scope">
+          <!-- <template #default="scope">
             {{ parseGoTime(scope.row.startTime) }}
           </template> -->
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="timeCost" label="请求耗时(ms)" align="center">
-          <template slot-scope="scope">
-            <el-tag size="small" :type="scope.row.timeCost | timeCostTagFilter" disable-transitions>{{ scope.row.timeCost
+          <template #default="scope">
+            <el-tag size="small" :type="timeCostTagFilter(scope.row.timeCost)" disable-transitions>{{ scope.row.timeCost
             }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="desc" label="说明" />
         <el-table-column fixed="right" label="操作" align="center" width="80">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tooltip content="删除" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @onConfirm="singleDelete(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
+              <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
+                <template #reference><el-button size="mini" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
@@ -123,38 +123,10 @@
 <script>
 import { getOperationLogs, batchDeleteOperationLogByIds, CleanOperationLog } from '@/api/log/operationLog'
 import { parseGoTime } from '@/utils/index'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
 
 export default {
   name: 'OperationLog',
-  filters: {
-    statusTagFilter(val) {
-      if (val === 200) {
-        return 'success'
-      } else if (val === 400) {
-        return 'warning'
-      } else if (val === 401) {
-        return 'danger'
-      } else if (val === 403) {
-        return 'danger'
-      } else if (val === 500) {
-        return 'danger'
-      } else {
-        return 'info'
-      }
-    },
-    timeCostTagFilter(val) {
-      if (val <= 200) {
-        return 'success'
-      } else if (val > 200 && val <= 1000) {
-        return ''
-      } else if (val > 1000 && val <= 2000) {
-        return 'warning'
-      } else {
-        return 'danger'
-      }
-    }
-  },
   data() {
     return {
       // 查询参数
@@ -194,6 +166,28 @@ export default {
     this.getTableData()
   },
   methods: {
+    statusTagFilter(val) {
+      if (val === 200) {
+        return 'success'
+      } else if (val === 400) {
+        return 'warning'
+      } else if (val === 401 || val === 403 || val === 500) {
+        return 'danger'
+      } else {
+        return 'info'
+      }
+    },
+    timeCostTagFilter(val) {
+      if (val <= 200) {
+        return 'success'
+      } else if (val > 200 && val <= 1000) {
+        return ''
+      } else if (val > 1000 && val <= 2000) {
+        return 'warning'
+      } else {
+        return 'danger'
+      }
+    },
     parseGoTime,
     // 查询
     search() {

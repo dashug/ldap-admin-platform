@@ -3,10 +3,10 @@
     <el-card class="container-card" shadow="always">
       <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
         <el-form-item label="访问路径">
-          <el-input v-model.trim="params.path" clearable placeholder="访问路径" @keyup.enter.native="search" @clear="search" />
+          <el-input v-model.trim="params.path" clearable placeholder="访问路径" @keyup.enter="search" @clear="search" />
         </el-form-item>
         <el-form-item label="所属类别">
-          <el-input v-model.trim="params.category" clearable placeholder="所属类别" @keyup.enter.native="search" @clear="search" />
+          <el-input v-model.trim="params.category" clearable placeholder="所属类别" @keyup.enter="search" @clear="search" />
         </el-form-item>
         <el-form-item label="请求方法">
           <el-select v-model.trim="params.method" clearable placeholder="请求方式" @change="search" @clear="search">
@@ -18,16 +18,16 @@
           </el-select>
         </el-form-item>
         <el-form-item label="创建人">
-          <el-input v-model.trim="params.creator" clearable placeholder="创建人" @keyup.enter.native="search" @clear="search" />
+          <el-input v-model.trim="params.creator" clearable placeholder="创建人" @keyup.enter="search" @clear="search" />
         </el-form-item>
         <el-form-item>
-          <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
+          <el-button :loading="loading" icon="Search" type="primary" @click="search">查询</el-button>
         </el-form-item>
         <el-form-item>
-          <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
+          <el-button :loading="loading" icon="Plus" type="warning" @click="create">新增</el-button>
         </el-form-item>
         <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-delete" type="danger" @click="batchDelete">批量删除</el-button>
+          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="Delete" type="danger" @click="batchDelete">批量删除</el-button>
         </el-form-item>
       </el-form>
 
@@ -36,20 +36,20 @@
         <el-table-column show-overflow-tooltip sortable prop="path" label="访问路径" />
         <el-table-column show-overflow-tooltip sortable prop="category" label="所属类别" />
         <el-table-column show-overflow-tooltip sortable prop="method" label="请求方式" align="center">
-          <template slot-scope="scope">
-            <el-tag size="small" :type="scope.row.method | methodTagFilter" disable-transitions>{{ scope.row.method }}</el-tag>
+          <template #default="scope">
+            <el-tag size="small" :type="methodTagFilter(scope.row.method)" disable-transitions>{{ scope.row.method }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" />
         <el-table-column show-overflow-tooltip sortable prop="remark" label="说明" />
         <el-table-column fixed="right" label="操作" align="center" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tooltip content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="el-icon-edit" circle type="primary" @click="update(scope.row)" />
+              <el-button size="mini" icon="Edit" circle type="primary" @click="update(scope.row)" />
             </el-tooltip>
             <el-tooltip class="delete-popover" content="删除" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @onConfirm="singleDelete(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
+              <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
+                <template #reference><el-button size="mini" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
@@ -68,7 +68,7 @@
         @current-change="handleCurrentChange"
       />
 
-      <el-dialog :title="dialogFormTitle" :visible.sync="dialogFormVisible">
+      <el-dialog :title="dialogFormTitle" v-model="dialogFormVisible">
         <el-form ref="dialogForm" size="small" :model="dialogFormData" :rules="dialogFormRules" label-width="120px">
           <el-form-item label="访问路径" prop="path">
             <el-input v-model.trim="dialogFormData.path" placeholder="访问路径" />
@@ -89,10 +89,10 @@
             <el-input v-model.trim="dialogFormData.remark" type="textarea" placeholder="说明" show-word-limit maxlength="100" />
           </el-form-item>
         </el-form>
-        <div slot="footer" class="dialog-footer">
+        <template #footer><div class="dialog-footer">
           <el-button size="mini" @click="cancelForm()">取 消</el-button>
           <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
-        </div>
+        </div></template>
       </el-dialog>
 
     </el-card>
@@ -101,27 +101,10 @@
 
 <script>
 import { getApis, createApi, updateApiById, batchDeleteApiByIds } from '@/api/system/api'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
 
 export default {
   name: 'Api',
-  filters: {
-    methodTagFilter(val) {
-      if (val === 'GET') {
-        return ''
-      } else if (val === 'POST') {
-        return 'success'
-      } else if (val === 'PUT') {
-        return 'info'
-      } else if (val === 'PATCH') {
-        return 'warning'
-      } else if (val === 'DELETE') {
-        return 'danger'
-      } else {
-        return 'info'
-      }
-    }
-  },
   data() {
     return {
       // 查询参数
@@ -178,6 +161,21 @@ export default {
     this.getTableData()
   },
   methods: {
+    methodTagFilter(val) {
+      if (val === 'GET') {
+        return ''
+      } else if (val === 'POST') {
+        return 'success'
+      } else if (val === 'PUT') {
+        return 'info'
+      } else if (val === 'PATCH') {
+        return 'warning'
+      } else if (val === 'DELETE') {
+        return 'danger'
+      } else {
+        return 'info'
+      }
+    },
     // 查询
     search() {
       this.params.pageNum = 1

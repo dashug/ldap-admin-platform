@@ -3,10 +3,10 @@
     <el-card class="container-card" shadow="always">
       <el-form size="mini" :inline="true" class="demo-form-inline">
         <el-form-item>
-          <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
+          <el-button :loading="loading" icon="Plus" type="warning" @click="create">新增</el-button>
         </el-form-item>
         <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-delete" type="danger" @click="batchDelete">批量删除</el-button>
+          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="Delete" type="danger" @click="batchDelete">批量删除</el-button>
         </el-form-item>
       </el-form>
 
@@ -20,36 +20,36 @@
         <el-table-column show-overflow-tooltip prop="redirect" label="重定向" />
         <el-table-column show-overflow-tooltip prop="sort" label="排序" align="center" width="80" />
         <el-table-column show-overflow-tooltip prop="status" label="禁用" align="center" width="80">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag size="small" :type="scope.row.status === 1 ? 'success':'danger'">{{ scope.row.status === 1 ? '否':'是' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip prop="hidden" label="隐藏" align="center" width="80">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag size="small" :type="scope.row.hidden === 1 ? 'danger':'success'">{{ scope.row.hidden === 1 ? '是':'否' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip prop="noCache" label="缓存" align="center" width="80">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag size="small" :type="scope.row.noCache === 1 ? 'danger':'success'">{{ scope.row.noCache === 1 ? '否':'是' }}</el-tag>
           </template>
         </el-table-column>
         <!-- <el-table-column show-overflow-tooltip prop="activeMenu" label="高亮菜单" /> -->
         <el-table-column fixed="right" label="操作" align="center" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tooltip fixed content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="el-icon-edit" circle type="primary" @click="update(scope.row)" />
+              <el-button size="mini" icon="Edit" circle type="primary" @click="update(scope.row)" />
             </el-tooltip>
             <el-tooltip class="delete-popover" fixed content="删除" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @onConfirm="singleDelete(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
+              <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
+                <template #reference><el-button size="mini" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
 
-      <el-dialog :title="dialogFormTitle" :visible.sync="dialogFormVisible" width="580px">
+      <el-dialog :title="dialogFormTitle" v-model="dialogFormVisible" width="580px">
         <el-form ref="dialogForm" :inline="true" size="small" :model="dialogFormData" :rules="dialogFormRules" label-width="80px">
           <el-form-item label="菜单标题" prop="title">
             <el-input v-model.trim="dialogFormData.title" placeholder="菜单标题(title)" style="width: 440px" />
@@ -63,15 +63,19 @@
           <el-form-item label="图标" prop="icon">
             <el-popover
               placement="bottom-start"
-              width="450"
+              :width="450"
               trigger="click"
               @show="$refs['iconSelect'].reset()"
             >
+              <template #reference>
+                <el-input v-model="dialogFormData.icon" style="width: 440px;" placeholder="点击选择图标" readonly>
+                  <template #prefix>
+                    <svg-icon v-if="dialogFormData.icon" :icon-class="dialogFormData.icon" class="el-input__icon" style="height: 32px;width: 16px;" />
+                    <i v-else class="el-icon-search el-input__icon" />
+                  </template>
+                </el-input>
+              </template>
               <IconSelect ref="iconSelect" @selected="selected" />
-              <el-input slot="reference" v-model="dialogFormData.icon" style="width: 440px;" placeholder="点击选择图标" readonly>
-                <svg-icon v-if="dialogFormData.icon" slot="prefix" :icon-class="dialogFormData.icon" class="el-input__icon" style="height: 32px;width: 16px;" />
-                <i v-else slot="prefix" class="el-icon-search el-input__icon" />
-              </el-input>
             </el-popover>
           </el-form-item>
           <el-form-item label="路由地址" prop="path">
@@ -113,19 +117,22 @@
               clearable
               filterable
             /> -->
-            <treeselect
+            <el-tree-select
               v-model="dialogFormData.parentId"
-              :options="treeselectData"
-              :normalizer="normalizer"
+              :data="treeselectData"
+              :props="{ value: 'ID', label: 'title', children: 'children' }"
+              node-key="ID"
+              check-strictly
+              :render-after-expand="false"
               style="width:440px"
-              @input="treeselectInput"
+              @change="treeselectInput"
             />
           </el-form-item>
         </el-form>
-        <div slot="footer" class="dialog-footer">
+        <template #footer><div class="dialog-footer">
           <el-button size="mini" @click="cancelForm()">取 消</el-button>
           <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
-        </div>
+        </div></template>
       </el-dialog>
 
     </el-card>
@@ -134,16 +141,13 @@
 
 <script>
 import IconSelect from '@/components/IconSelect'
-import Treeselect from '@riophae/vue-treeselect'
-import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import { getMenuTree, createMenu, updateMenuById, batchDeleteMenuByIds } from '@/api/system/menu'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
 
 export default {
   name: 'Menu',
   components: {
-    IconSelect,
-    Treeselect
+    IconSelect
   },
   data() {
     return {
@@ -393,13 +397,6 @@ export default {
     },
 
     // treeselect
-    normalizer(node) {
-      return {
-        id: node.ID,
-        label: node.title,
-        children: node.children
-      }
-    },
     treeselectInput(value) {
       this.treeselectValue = value
     }

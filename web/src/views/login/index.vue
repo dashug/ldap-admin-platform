@@ -6,7 +6,7 @@
         <h1 class="login-title">LDAP 管理平台</h1>
         <p class="login-desc">统一身份与目录管理</p>
       </div>
-      <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" autocomplete="on" label-position="top" @submit.native.prevent="handleLogin">
+      <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" autocomplete="on" label-position="top" @submit.prevent="handleLogin">
         <el-form-item prop="username">
           <el-input
             ref="username"
@@ -16,7 +16,7 @@
             type="text"
             tabindex="1"
             autocomplete="on"
-            prefix-icon="el-icon-user"
+            prefix-icon="User"
           />
         </el-form-item>
         <el-tooltip v-model="capsTooltip" content="Caps Lock 已打开" placement="top" manual>
@@ -31,16 +31,16 @@
               tabindex="2"
               autocomplete="on"
               show-password
-              prefix-icon="el-icon-lock"
-              @keyup.native="checkCapslock"
+              prefix-icon="Lock"
+              @keyup="checkCapslock"
               @blur="capsTooltip = false"
-              @keyup.enter.native="handleLogin"
+              @keyup.enter="handleLogin"
             />
           </el-form-item>
         </el-tooltip>
         <div class="login-actions">
           <span class="link-forget" @click="changePass">忘记密码</span>
-          <el-button :loading="loading" type="primary" class="login-btn" @click.native.prevent="handleLogin">登 录</el-button>
+          <el-button :loading="loading" type="primary" class="login-btn" @click.prevent="handleLogin">登 录</el-button>
         </div>
       </el-form>
     </div>
@@ -71,7 +71,7 @@ export default {
         password: [{ required: true, trigger: 'blur', validator: validatePassword }]
       },
       passwordType: 'password',
-      publicKey: process.env.VUE_APP_PUBLIC_KEY || '',
+      publicKey: import.meta.env.VITE_APP_PUBLIC_KEY || '',
       capsTooltip: false,
       loading: false,
       publicKeyLoading: true,
@@ -184,7 +184,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "~@/styles/variables.scss";
+@import "@/styles/variables.scss";
 
 .login-container {
   min-height: 100vh;

@@ -3,10 +3,10 @@
     <el-card class="container-card" shadow="always">
       <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
         <el-form-item label="角色名称">
-          <el-input v-model.trim="params.name" clearable placeholder="角色名称" @keyup.enter.native="search" @clear="search" />
+          <el-input v-model.trim="params.name" clearable placeholder="角色名称" @keyup.enter="search" @clear="search" />
         </el-form-item>
         <el-form-item label="关键字">
-          <el-input v-model.trim="params.keyword" clearable placeholder="关键字" @keyup.enter.native="search" @clear="search" />
+          <el-input v-model.trim="params.keyword" clearable placeholder="关键字" @keyup.enter="search" @clear="search" />
         </el-form-item>
         <el-form-item label="角色状态">
           <el-select v-model.trim="params.status" clearable placeholder="角色状态" @change="search" @clear="search">
@@ -15,13 +15,13 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
+          <el-button :loading="loading" icon="Search" type="primary" @click="search">查询</el-button>
         </el-form-item>
         <el-form-item>
-          <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
+          <el-button :loading="loading" icon="Plus" type="warning" @click="create">新增</el-button>
         </el-form-item>
         <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-delete" type="danger" @click="batchDelete">批量删除</el-button>
+          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="Delete" type="danger" @click="batchDelete">批量删除</el-button>
         </el-form-item>
       </el-form>
 
@@ -31,23 +31,23 @@
         <el-table-column show-overflow-tooltip sortable prop="keyword" label="关键字" />
         <el-table-column show-overflow-tooltip sortable prop="sort" label="等级" />
         <el-table-column show-overflow-tooltip sortable prop="status" label="角色状态" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag size="small" :type="scope.row.status === 1 ? 'success':'danger'" disable-transitions>{{ scope.row.status === 1 ? '正常':'禁用' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" />
         <el-table-column show-overflow-tooltip sortable prop="remark" label="说明" />
         <el-table-column fixed="right" label="操作" align="center" width="140">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tooltip content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="el-icon-edit" circle type="primary" @click="update(scope.row)" />
+              <el-button size="mini" icon="Edit" circle type="primary" @click="update(scope.row)" />
             </el-tooltip>
             <el-tooltip content="权限" effect="dark" placement="top">
-              <el-button size="mini" icon="el-icon-key" circle type="warning" @click="updatePermission(scope.row.ID)" />
+              <el-button size="mini" icon="Key" circle type="warning" @click="updatePermission(scope.row.ID)" />
             </el-tooltip>
             <el-tooltip content="删除" effect="dark" placement="top">
-              <el-popconfirm style="margin-left:10px" title="确定删除吗？" @onConfirm="singleDelete(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
+              <el-popconfirm style="margin-left:10px" title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
+                <template #reference><el-button size="mini" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
@@ -66,7 +66,7 @@
         @current-change="handleCurrentChange"
       />
 
-      <el-dialog :title="dialogFormTitle" :visible.sync="dialogFormVisible" width="580px">
+      <el-dialog :title="dialogFormTitle" v-model="dialogFormVisible" width="580px">
         <el-form ref="dialogForm" :inline="true" size="small" :model="dialogFormData" :rules="dialogFormRules" label-width="100px">
           <el-form-item label="角色名称" prop="name">
             <el-input v-model.trim="dialogFormData.name" placeholder="角色名称" style="width: 420px" />
@@ -87,16 +87,16 @@
             <el-input v-model.trim="dialogFormData.remark" style="width: 420px" type="textarea" placeholder="说明" show-word-limit maxlength="100" />
           </el-form-item>
         </el-form>
-        <div slot="footer">
+        <template #footer><div>
           <el-button size="mini" @click="cancelForm()">取 消</el-button>
           <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
-        </div>
+        </div></template>
       </el-dialog>
 
-      <el-dialog title="修改权限" :visible.sync="permsDialogVisible" width="580px" custom-class="perms-dialog">
+      <el-dialog title="修改权限" v-model="permsDialogVisible" width="580px" custom-class="perms-dialog">
         <el-tabs>
           <el-tab-pane>
-            <span slot="label"><svg-icon icon-class="menu1" class-name="role-menu" /> 角色菜单</span>
+            <template #label><span><svg-icon icon-class="menu1" class-name="role-menu" /> 角色菜单</span></template>
             <el-tree
               ref="roleMenuTree"
               v-loading="menuTreeLoading"
@@ -111,7 +111,7 @@
           </el-tab-pane>
 
           <el-tab-pane>
-            <span slot="label"><svg-icon icon-class="api1" class-name="role-menu" /> 角色接口</span>
+            <template #label><span><svg-icon icon-class="api1" class-name="role-menu" /> 角色接口</span></template>
             <el-tree
               ref="roleApiTree"
               v-loading="apiTreeLoading"
@@ -124,10 +124,10 @@
 
           </el-tab-pane>
         </el-tabs>
-        <div slot="footer">
+        <template #footer><div>
           <el-button size="mini" :loading="permissionLoading" @click="cancelPermissionForm()">取 消</el-button>
           <el-button size="mini" type="primary" @click="submitPermissionForm()">确 定</el-button>
-        </div>
+        </div></template>
       </el-dialog>
 
     </el-card>
@@ -138,7 +138,7 @@
 import { getRoles, createRole, updateRoleById, batchDeleteRoleByIds, getRoleMenusById, getRoleApisById, updateRoleMenusById, updateRoleApisById } from '@/api/system/role'
 import { getMenuTree } from '@/api/system/menu'
 import { getApiTree } from '@/api/system/api'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
 
 export default {
   name: 'Role',

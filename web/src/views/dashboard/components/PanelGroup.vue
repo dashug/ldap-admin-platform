@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import CountTo from 'vue-count-to'
+import CountTo from '@/components/CountTo/index.vue'
 import { getDash } from '@/api/dashboards/dashboard'
 export default {
   components: {
@@ -62,7 +62,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "~@/styles/variables.scss";
+@import "@/styles/variables.scss";
 
 .panel-group {
   margin-top: 0;

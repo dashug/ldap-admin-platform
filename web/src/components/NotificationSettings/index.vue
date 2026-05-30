@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     title="通知设置"
-    :visible.sync="visible"
+    v-model="visible"
     width="520px"
     :close-on-click-modal="false"
     @open="fetchConfig"
@@ -36,10 +36,10 @@
         </el-form-item>
       </template>
     </el-form>
-    <div slot="footer" class="dialog-footer">
+    <template #footer><div class="dialog-footer">
       <el-button size="small" @click="visible = false">取 消</el-button>
       <el-button size="small" type="primary" :loading="saving" @click="submit">保 存</el-button>
-    </div>
+    </div></template>
   </el-dialog>
 </template>
 

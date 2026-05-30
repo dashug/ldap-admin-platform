@@ -49,7 +49,7 @@
               <el-table-column show-overflow-tooltip prop="username" label="请求人" width="100" />
               <el-table-column show-overflow-tooltip prop="path" label="请求路径" min-width="180" />
               <el-table-column prop="method" label="方式" width="70" align="center">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <el-tag v-if="scope.row.method === 'GET'" type="success" size="mini">GET</el-tag>
                   <el-tag v-else-if="scope.row.method === 'POST'" type="warning" size="mini">POST</el-tag>
                   <el-tag v-else-if="scope.row.method === 'PUT'" type="primary" size="mini">PUT</el-tag>
@@ -58,7 +58,7 @@
                 </template>
               </el-table-column>
               <el-table-column prop="status" label="状态" width="70" align="center">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <el-tag :type="scope.row.status >= 200 && scope.row.status < 300 ? 'success' : 'danger'" size="mini">{{ scope.row.status }}</el-tag>
                 </template>
               </el-table-column>
@@ -154,7 +154,7 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-@import "~@/styles/variables.scss";
+@import "@/styles/variables.scss";
 
 .dashboard-container {
   padding: 0;
