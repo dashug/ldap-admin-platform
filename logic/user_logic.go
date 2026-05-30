@@ -364,14 +364,8 @@ func (l UserLogic) ChangePwd(c *gin.Context, req any) (data any, rspError any) {
 	if err != nil {
 		return nil, tools.NewMySqlError(fmt.Errorf("获取当前登陆用户失败"))
 	}
-	// 获取用户的真实正确密码
-	// correctPasswd := user.Password
-	// 判断前端请求的密码是否等于真实密码
-	// err = tools.ComparePasswd(correctPasswd, r.OldPassword)
-	// if err != nil {
-	// 	return nil, tools.NewValidatorError(fmt.Errorf("原密码错误"))
-	// }
-	if tools.NewParPasswd(user.Password) != r.OldPassword {
+	// 校验原密码（兼容本地账号 bcrypt 与 LDAP 用户 RSA 两种存储）
+	if !tools.VerifyPassword(user.Password, r.OldPassword) {
 		return nil, tools.NewValidatorError(fmt.Errorf("原密码错误"))
 	}
 	// ldap更新密码时可以直接指定用户DN和新密码即可更改成功

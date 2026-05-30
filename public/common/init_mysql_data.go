@@ -271,7 +271,8 @@ func InitData() {
 		{
 			Model:         gorm.Model{ID: 1},
 			Username:      "admin",
-			Password:      tools.NewGenPasswd(config.Conf.Ldap.AdminPass),
+			// 平台本地管理员账号不下发到 LDAP，密码以 bcrypt 不可逆哈希存储
+			Password: tools.HashPassword(config.Conf.Ldap.AdminPass),
 			Nickname:      "管理员",
 			GivenName:     "最强后台",
 			Mail:          "admin@" + config.Conf.Ldap.DefaultEmailSuffix,
@@ -306,7 +307,7 @@ func InitData() {
 	// 3.1 当开启初始化数据时，始终将 admin 用户密码与 config 中的 ldap.admin-pass 同步，避免配置改了但库内仍是旧密码导致无法登录
 	var adminUser model.User
 	if err := DB.Where("username = ?", "admin").First(&adminUser).Error; err == nil {
-		newPassHash := tools.NewGenPasswd(config.Conf.Ldap.AdminPass)
+		newPassHash := tools.HashPassword(config.Conf.Ldap.AdminPass)
 		if err := DB.Model(&model.User{}).Where("username = ?", "admin").Update("password", newPassHash).Error; err != nil {
 			Log.Warnf("同步 admin 密码到配置失败: %v", err)
 		}
