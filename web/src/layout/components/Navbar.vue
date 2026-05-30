@@ -5,41 +5,9 @@
     <breadcrumb id="breadcrumb-container" class="breadcrumb-container" />
 
     <div class="right-menu">
-      <template v-if="device!=='mobile'">
-        <el-tooltip content="搜索" effect="dark" placement="bottom">
-          <search id="header-search" class="right-menu-item" />
-        </el-tooltip>
-
-        <error-log class="errLog-container right-menu-item hover-effect" />
-
-        <el-tooltip content="全屏" effect="dark" placement="bottom">
-          <screenfull id="screenfull" class="right-menu-item hover-effect" />
-        </el-tooltip>
-
-        <el-tooltip content="布局大小" effect="dark" placement="bottom">
-          <size-select id="size-select" class="right-menu-item hover-effect" />
-        </el-tooltip>
-
-        <el-tooltip content="GitHub" effect="dark" placement="bottom">
-          <el-link style="font-size: 23px;" class="iconfont icon-github right-menu-item" href="https://github.com/dashug/ldap-admin-platform" :underline="false" target="_blank" />
-        </el-tooltip>
-
-      </template>
-
-      <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
-        <div class="avatar-wrapper">
-          <img :src="avatar+'?imageView2/1/w/80/h/80'" class="user-avatar">
-          <i class="el-icon-caret-bottom" />
-        </div>
-        <template #dropdown><el-dropdown-menu>
-          <router-link to="/profile/index">
-            <el-dropdown-item>个人中心</el-dropdown-item>
-          </router-link>
-          <el-dropdown-item divided @click="logout">
-            <span style="display:block;">退出登陆</span>
-          </el-dropdown-item>
-        </el-dropdown-menu></template>
-      </el-dropdown>
+      <el-tooltip v-if="device!=='mobile'" content="全屏" effect="dark" placement="bottom">
+        <screenfull id="screenfull" class="right-menu-item hover-effect" />
+      </el-tooltip>
     </div>
   </div>
 </template>

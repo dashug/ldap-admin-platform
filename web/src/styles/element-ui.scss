@@ -82,6 +82,23 @@
   font-weight: $fontWeightMedium;
 }
 
+/* 配色纪律：仅保留 主色(primary)=靛蓝、危险(danger)=红；
+   其余实色类型(warning/success/info)收敛为中性次级按钮，去除“彩虹按钮”观感。
+   语义颜色由 el-tag 等承担，不依赖按钮底色。 */
+.el-button--warning:not(.is-plain):not(.is-text),
+.el-button--success:not(.is-plain):not(.is-text),
+.el-button--info:not(.is-plain):not(.is-text) {
+  --el-button-bg-color: #ffffff;
+  --el-button-border-color: #{$slate200};
+  --el-button-text-color: #{$slate700};
+  --el-button-hover-bg-color: #{$slate50};
+  --el-button-hover-border-color: #{$slate300};
+  --el-button-hover-text-color: #{$slate900};
+  --el-button-active-bg-color: #{$slate100};
+  --el-button-active-border-color: #{$slate300};
+  --el-button-active-text-color: #{$slate900};
+}
+
 /* 抽屉（右侧滑入的表单面板） */
 .el-drawer__header {
   margin-bottom: 0;
