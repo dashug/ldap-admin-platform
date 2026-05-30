@@ -73,22 +73,6 @@ func (m *BaseController) EncryptPasswd(c *gin.Context) {
 	})
 }
 
-// DecryptPasswd 密码解密为明文
-// @Summary 密码解密
-// @Description 将加密后的密码解密为明文
-// @Tags 基础管理
-// @Accept application/json
-// @Produce application/json
-// @Param passwd query string true "需要解密的加密密码"
-// @Success 200 {object} response.ResponseBody
-// @Router /base/decryptpwd [get]
-func (m *BaseController) DecryptPasswd(c *gin.Context) {
-	req := new(request.DecryptPasswdReq)
-	Run(c, req, func() (any, any) {
-		return logic.Base.DecryptPasswd(c, req)
-	})
-}
-
 // GetPublicKey 获取登录用 RSA 公钥（供前端加密密码，无需鉴权）
 // @Summary 获取 RSA 公钥
 // @Description 返回用于登录密码加密的 RSA 公钥 PEM，前端未配置 VUE_APP_PUBLIC_KEY 时可由此接口获取以保证与后端一致

@@ -188,17 +188,6 @@ func (l BaseLogic) EncryptPasswd(c *gin.Context, req any) (data any, rspError an
 	return tools.NewGenPasswd(r.Passwd), nil
 }
 
-// DecryptPasswd
-func (l BaseLogic) DecryptPasswd(c *gin.Context, req any) (data any, rspError any) {
-	r, ok := req.(*request.DecryptPasswdReq)
-	if !ok {
-		return nil, ReqAssertErr
-	}
-	_ = c
-
-	return tools.NewParPasswd(r.Passwd), nil
-}
-
 // GetPublicKey 返回登录用 RSA 公钥 PEM，供前端加密密码（与后端密钥对一致）
 func (l BaseLogic) GetPublicKey(c *gin.Context) (data any, err error) {
 	if config.Conf.System == nil || len(config.Conf.System.RSAPublicBytes) == 0 {
