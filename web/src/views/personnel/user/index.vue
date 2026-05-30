@@ -32,13 +32,14 @@
             <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="Delete" type="danger" @click="batchDelete">批量删除</el-button>
           </el-form-item>
           <el-form-item>
-            <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="Upload" type="success" @click="batchSync">批量同步</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button :disabled="multipleSelection.length === 0" :loading="previewLoading" icon="View" type="info" plain @click="syncPreview">同步预览</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button :loading="exportLoading" icon="Download" type="primary" plain @click="exportUserList">导出 Excel</el-button>
+            <el-dropdown trigger="click" @command="handleMoreCommand">
+              <el-button plain>更多操作<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+              <template #dropdown><el-dropdown-menu>
+                <el-dropdown-item command="batchSync" :disabled="multipleSelection.length === 0" icon="Upload">批量同步</el-dropdown-item>
+                <el-dropdown-item command="syncPreview" :disabled="multipleSelection.length === 0" icon="View">同步预览</el-dropdown-item>
+                <el-dropdown-item command="export" icon="Download">导出 Excel</el-dropdown-item>
+              </el-dropdown-menu></template>
+            </el-dropdown>
           </el-form-item>
           <el-form-item>
             <el-dropdown trigger="click" @command="handleColumnCommand">
@@ -57,9 +58,14 @@
       <!-- 配置与同步来源 -->
       <div class="toolbar-section toolbar-section--secondary">
         <span class="toolbar-label">配置</span>
-        <el-button :loading="loading" icon="Setting" type="primary" plain size="small" @click="openDirectoryConfig">目录配置</el-button>
-        <el-button :loading="loading" icon="Connection" type="success" plain size="small" @click="openThirdPartyConfig">平台对接</el-button>
-        <el-button :loading="loading" icon="Message" type="info" plain size="small" @click="$refs.notificationSettings.open()">通知设置</el-button>
+        <el-dropdown trigger="click" @command="handleConfigCommand">
+          <el-button type="primary" plain size="small">系统配置<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+          <template #dropdown><el-dropdown-menu>
+            <el-dropdown-item command="directory" icon="Setting">目录配置</el-dropdown-item>
+            <el-dropdown-item command="thirdparty" icon="Connection">平台对接</el-dropdown-item>
+            <el-dropdown-item command="notification" icon="Message">通知设置</el-dropdown-item>
+          </el-dropdown-menu></template>
+        </el-dropdown>
         <el-tag size="small" type="info" class="toolbar-tag">目录：{{ directoryTypeText }}</el-tag>
         <span class="toolbar-label toolbar-label--sync">同步来源</span>
         <template v-if="syncConfig.ldapEnableSync">
@@ -76,7 +82,8 @@
         </template>
       </div>
 
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange" @header-dragend="handleUserTableHeaderDragend">
+      <el-skeleton v-if="loading && tableData.length === 0" :rows="6" animated style="padding: 12px 4px;" />
+      <el-table v-else v-loading="loading" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange" @header-dragend="handleUserTableHeaderDragend">
         <el-table-column type="selection" width="55" align="center" />
         <template v-for="col in visibleUserColumns">
           <el-table-column
@@ -726,6 +733,10 @@ export default {
     this.getTableData()
     this.getRoles()
     this.getSyncConfig()
+    // 从仪表盘「去配置」跳转而来时，自动打开目录配置弹窗
+    if (this.$route.query.openConfig === 'directory') {
+      this.$nextTick(() => this.openDirectoryConfig())
+    }
   },
   computed: {
     directoryTypeText() {
@@ -865,6 +876,18 @@ export default {
       } catch (err) {
         Message.error('导入失败：' + (err.msg || err.message || '无效的 JSON'))
       }
+    },
+    // 「更多操作」下拉
+    handleMoreCommand(cmd) {
+      if (cmd === 'batchSync') this.batchSync()
+      else if (cmd === 'syncPreview') this.syncPreview()
+      else if (cmd === 'export') this.exportUserList()
+    },
+    // 「系统配置」下拉
+    handleConfigCommand(cmd) {
+      if (cmd === 'directory') this.openDirectoryConfig()
+      else if (cmd === 'thirdparty') this.openThirdPartyConfig()
+      else if (cmd === 'notification') this.$refs.notificationSettings.open()
     },
     openDirectoryConfig() {
       const dirType = (this.syncConfig.directoryType || 'openldap').toLowerCase()
