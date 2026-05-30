@@ -42,6 +42,9 @@ func main() {
 	// 初始化日志
 	common.InitLogger()
 
+	// 启动安全自检：检测弱默认密钥/密码等高风险配置并告警
+	common.SecurityCheck()
+
 	// 初始化数据库(mysql)
 	common.InitDB()
 
