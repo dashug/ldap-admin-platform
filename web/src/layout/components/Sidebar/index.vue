@@ -32,6 +32,21 @@
           <span v-if="!isCollapse" class="nav__label">{{ it.title }}</span>
         </router-link>
       </template>
+
+      <!-- 设置（常驻可见的配置入口，提升可发现性） -->
+      <div v-if="!isCollapse" class="nav__section">设置</div>
+      <a class="nav__item" title="目录配置" @click="openSetting('directory')">
+        <el-icon class="nav__icon"><Setting /></el-icon>
+        <span v-if="!isCollapse" class="nav__label">目录配置</span>
+      </a>
+      <a class="nav__item" title="平台对接" @click="openSetting('thirdparty')">
+        <el-icon class="nav__icon"><Connection /></el-icon>
+        <span v-if="!isCollapse" class="nav__label">平台对接</span>
+      </a>
+      <a class="nav__item" title="通知设置" @click="openSetting('notification')">
+        <el-icon class="nav__icon"><Bell /></el-icon>
+        <span v-if="!isCollapse" class="nav__label">通知设置</span>
+      </a>
     </div>
 
     <!-- 用户 -->
@@ -109,6 +124,10 @@ export default {
     },
     openCmdk() {
       window.dispatchEvent(new Event('open-cmdk'))
+    },
+    openSetting(type) {
+      // 跳到用户页并自动打开对应配置弹窗（带时间戳确保 keep-alive 下重复点击也生效）
+      this.$router.push({ path: '/personnel/user', query: { openConfig: type, t: Date.now() } }).catch(() => {})
     },
     onUserCommand(cmd) {
       if (cmd === 'profile') this.$router.push('/profile/index').catch(() => {})
@@ -214,6 +233,7 @@ export default {
   color: $slate600;
   font-size: 14px;
   text-decoration: none;
+  cursor: pointer;
   transition: background $transitionBase, color $transitionBase;
   .nav__icon { font-size: 17px; flex: none; }
   .nav__label { white-space: nowrap; overflow: hidden; }

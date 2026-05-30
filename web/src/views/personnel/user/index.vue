@@ -733,9 +733,15 @@ export default {
     this.getTableData()
     this.getRoles()
     this.getSyncConfig()
-    // 从仪表盘「去配置」跳转而来时，自动打开目录配置弹窗
-    if (this.$route.query.openConfig === 'directory') {
-      this.$nextTick(() => this.openDirectoryConfig())
+    this.maybeOpenConfig()
+  },
+  watch: {
+    // 侧边栏「设置」入口跳转过来时（keep-alive 下仅 query 变化）自动打开对应配置
+    '$route.query.openConfig'() {
+      this.maybeOpenConfig()
+    },
+    '$route.query.t'() {
+      this.maybeOpenConfig()
     }
   },
   computed: {
@@ -888,6 +894,11 @@ export default {
       if (cmd === 'directory') this.openDirectoryConfig()
       else if (cmd === 'thirdparty') this.openThirdPartyConfig()
       else if (cmd === 'notification') this.$refs.notificationSettings.open()
+    },
+    // 侧边栏「设置」入口 / 仪表盘「去配置」跳转时按 query 自动打开对应配置
+    maybeOpenConfig() {
+      const oc = this.$route.query.openConfig
+      if (oc) this.$nextTick(() => this.handleConfigCommand(oc))
     },
     openDirectoryConfig() {
       const dirType = (this.syncConfig.directoryType || 'openldap').toLowerCase()
