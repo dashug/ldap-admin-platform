@@ -3,8 +3,12 @@
 # 旧版（仅打包预编译二进制）见 deploy/Dockerfile.prebuilt。
 # syntax=docker/dockerfile:1
 
-# ---------- 1) 构建前端（Vue 3 + Vite，需 Node 18+） ----------
-FROM node:18-alpine AS web
+# 多架构说明：前端与后端均在【构建平台】上运行（$BUILDPLATFORM，不走 QEMU 模拟），
+# 前端产物与架构无关，Go 用 CGO=0 直接交叉编译到目标架构（$TARGETOS/$TARGETARCH），
+# 因此 linux/amd64 + linux/arm64 多架构构建既快又稳。
+
+# ---------- 1) 构建前端（Vue 3 + Vite，需 Node 18+；架构无关） ----------
+FROM --platform=$BUILDPLATFORM node:18-alpine AS web
 WORKDIR /web
 # 先装依赖（利用层缓存）：有 lock 用 npm ci，否则回退 npm install
 COPY web/package.json web/package-lock.json* ./
@@ -12,8 +16,8 @@ RUN npm ci || npm install
 COPY web/ ./
 RUN npm run build:prod
 
-# ---------- 2) 编译后端（把前端 embed 进单二进制；纯 Go sqlite，关闭 CGO） ----------
-FROM golang:1.25-alpine AS server
+# ---------- 2) 编译后端（前端 embed 进单二进制；纯 Go sqlite，CGO=0 交叉编译） ----------
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS server
 WORKDIR /src
 RUN apk add --no-cache git
 COPY go.mod go.sum ./
@@ -23,7 +27,9 @@ COPY . .
 RUN rm -rf public/static/dist
 COPY --from=web /web/dist ./public/static/dist
 ARG VERSION=docker
-RUN CGO_ENABLED=0 GOOS=linux go build \
+ARG TARGETOS
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build \
     -ldflags "-s -w -X 'github.com/dashug/ldap-admin-platform/public/version.Version=${VERSION}'" \
     -o /out/go-ldap-admin main.go
 
