@@ -137,6 +137,22 @@ func (m *BaseController) ImportConfig(c *gin.Context) {
 	})
 }
 
+// TestDirectoryConfig 测试目录（LDAP）连接
+// @Summary 测试目录连接
+// @Description 使用提交的目录参数拨号并绑定，验证连接是否可用（不保存）
+// @Tags 基础管理
+// @Accept application/json
+// @Produce application/json
+// @Param data body request.BaseTestDirectoryConfigReq true "目录连接参数"
+// @Success 200 {object} response.ResponseBody
+// @Router /base/directoryConfig/test [post]
+func (m *BaseController) TestDirectoryConfig(c *gin.Context) {
+	req := new(request.BaseTestDirectoryConfigReq)
+	Run(c, req, func() (any, any) {
+		return logic.Base.TestDirectoryConfig(c, req)
+	})
+}
+
 // UpdateThirdPartyConfig 更新第三方平台配置
 // @Summary 更新第三方平台配置
 // @Description 更新飞书、企微、钉钉对接参数
@@ -182,6 +198,145 @@ func (m *BaseController) UpdateEmailConfig(c *gin.Context) {
 	req := new(request.BaseUpdateEmailConfigReq)
 	Run(c, req, func() (any, any) {
 		return logic.Base.UpdateEmailConfig(c, req)
+	})
+}
+
+// TestNotification 测试通知（邮件 / Webhook）
+// @Summary 测试通知配置
+// @Description 发送一封测试邮件，或向 Webhook 地址发送一条测试回调，验证配置是否可用（不保存）
+// @Tags 基础管理
+// @Accept application/json
+// @Produce application/json
+// @Param data body request.BaseTestNotificationReq true "测试通知参数"
+// @Success 200 {object} response.ResponseBody
+// @Router /base/emailConfig/test [post]
+func (m *BaseController) TestNotification(c *gin.Context) {
+	req := new(request.BaseTestNotificationReq)
+	Run(c, req, func() (any, any) {
+		return logic.Base.TestNotification(c, req)
+	})
+}
+
+// ListWebhookDeliveries 查询 Webhook 投递记录
+// @Summary 查询 Webhook 投递记录
+// @Description 分页查询回调投递历史（含签名/重试后的最终结果），供排查
+// @Tags 基础管理
+// @Accept application/json
+// @Produce application/json
+// @Param data query request.BaseWebhookDeliveriesReq true "分页参数"
+// @Success 200 {object} response.ResponseBody
+// @Router /base/webhookDeliveries [get]
+func (m *BaseController) ListWebhookDeliveries(c *gin.Context) {
+	req := new(request.BaseWebhookDeliveriesReq)
+	Run(c, req, func() (any, any) {
+		return logic.Base.ListWebhookDeliveries(c, req)
+	})
+}
+
+// UpdateSyncConfig 更新定时自动同步配置
+// @Summary 更新定时自动同步配置
+// @Tags 基础管理
+// @Accept application/json
+// @Produce application/json
+// @Param data body request.BaseUpdateSyncConfigReq true "定时同步配置"
+// @Success 200 {object} response.ResponseBody
+// @Router /base/syncConfig [post]
+func (m *BaseController) UpdateSyncConfig(c *gin.Context) {
+	req := new(request.BaseUpdateSyncConfigReq)
+	Run(c, req, func() (any, any) {
+		return logic.Base.UpdateSyncConfig(c, req)
+	})
+}
+
+// RunSyncNow 立即触发某来源同步
+// @Summary 立即同步
+// @Tags 基础管理
+// @Accept application/json
+// @Produce application/json
+// @Param data body request.BaseRunSyncReq true "同步来源"
+// @Success 200 {object} response.ResponseBody
+// @Router /base/syncRun [post]
+func (m *BaseController) RunSyncNow(c *gin.Context) {
+	req := new(request.BaseRunSyncReq)
+	Run(c, req, func() (any, any) {
+		return logic.Base.RunSyncNow(c, req)
+	})
+}
+
+// ListSyncRuns 查询同步运行记录
+// @Summary 查询同步运行记录
+// @Tags 基础管理
+// @Accept application/json
+// @Produce application/json
+// @Param data query request.BaseSyncRunsReq true "分页参数"
+// @Success 200 {object} response.ResponseBody
+// @Router /base/syncRuns [get]
+func (m *BaseController) ListSyncRuns(c *gin.Context) {
+	req := new(request.BaseSyncRunsReq)
+	Run(c, req, func() (any, any) {
+		return logic.Base.ListSyncRuns(c, req)
+	})
+}
+
+// UserBatchImport 批量导入用户
+// @Summary 批量导入用户
+// @Description CSV/Excel 解析后的用户行批量创建，dryRun 仅校验不落库
+// @Tags 基础管理
+// @Accept application/json
+// @Produce application/json
+// @Param data body request.UserBatchImportReq true "导入用户列表"
+// @Success 200 {object} response.ResponseBody
+// @Router /base/userBatchImport [post]
+func (m *BaseController) UserBatchImport(c *gin.Context) {
+	req := new(request.UserBatchImportReq)
+	Run(c, req, func() (any, any) {
+		return logic.User.BatchImport(c, req)
+	})
+}
+
+// MfaStatus 查询当前用户 MFA 状态
+// @Tags 基础管理
+// @Success 200 {object} response.ResponseBody
+// @Router /base/mfa/status [get]
+func (m *BaseController) MfaStatus(c *gin.Context) {
+	req := new(request.BaseMfaStatusReq)
+	Run(c, req, func() (any, any) {
+		return logic.Base.MfaStatus(c, req)
+	})
+}
+
+// MfaSetup 生成 MFA 密钥与二维码
+// @Tags 基础管理
+// @Success 200 {object} response.ResponseBody
+// @Router /base/mfa/setup [post]
+func (m *BaseController) MfaSetup(c *gin.Context) {
+	req := new(request.BaseMfaSetupReq)
+	Run(c, req, func() (any, any) {
+		return logic.Base.MfaSetup(c, req)
+	})
+}
+
+// MfaVerify 校验验证码并启用 MFA
+// @Tags 基础管理
+// @Param data body request.BaseMfaCodeReq true "验证码"
+// @Success 200 {object} response.ResponseBody
+// @Router /base/mfa/verify [post]
+func (m *BaseController) MfaVerify(c *gin.Context) {
+	req := new(request.BaseMfaCodeReq)
+	Run(c, req, func() (any, any) {
+		return logic.Base.MfaVerify(c, req)
+	})
+}
+
+// MfaDisable 关闭 MFA
+// @Tags 基础管理
+// @Param data body request.BaseMfaCodeReq true "验证码"
+// @Success 200 {object} response.ResponseBody
+// @Router /base/mfa/disable [post]
+func (m *BaseController) MfaDisable(c *gin.Context) {
+	req := new(request.BaseMfaCodeReq)
+	Run(c, req, func() (any, any) {
+		return logic.Base.MfaDisable(c, req)
 	})
 }
 

@@ -60,6 +60,19 @@
               />
             </el-form-item>
           </el-tooltip>
+          <el-form-item v-if="mfaRequired" prop="otp">
+            <el-input
+              ref="otp"
+              v-model.trim="loginForm.otp"
+              size="large"
+              maxlength="6"
+              placeholder="请输入 6 位动态验证码"
+              name="otp"
+              tabindex="3"
+              prefix-icon="Key"
+              @keyup.enter="handleLogin"
+            />
+          </el-form-item>
           <div class="login-actions">
             <span class="link-forget" @click="changePass">忘记密码？</span>
             <el-button :loading="loading" type="primary" size="large" class="login-btn" @click.prevent="handleLogin">登 录</el-button>
@@ -85,9 +98,11 @@ export default {
       }
     }
     return {
+      mfaRequired: false,
       loginForm: {
         username: '',
-        password: ''
+        password: '',
+        otp: ''
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur' }],
@@ -176,14 +191,25 @@ export default {
             this.$message.error('密码加密失败，请刷新页面重试')
             return
           }
-          const encLoginForm = { username: this.loginForm.username, password: encPassword }
+          const encLoginForm = { username: this.loginForm.username, password: encPassword, otp: this.loginForm.otp }
           this.$store.dispatch('user/login', encLoginForm)
             .then(() => {
               this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
               this.loading = false
             })
-            .catch(() => {
+            .catch((error) => {
               this.loading = false
+              const msg = (error && error.response && error.response.data && (error.response.data.msg || error.response.data.message)) || (error && error.message) || ''
+              if (msg.indexOf('动态验证码') !== -1) {
+                const firstPrompt = !this.mfaRequired
+                this.mfaRequired = true
+                this.$nextTick(() => { this.$refs.otp && this.$refs.otp.focus() })
+                if (firstPrompt || !this.loginForm.otp) {
+                  this.$message.info('该账号已开启二次验证，请输入动态验证码')
+                } else {
+                  this.$message.error('动态验证码错误，请重试')
+                }
+              }
             })
         } else {
           return false

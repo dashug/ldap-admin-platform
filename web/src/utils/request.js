@@ -71,6 +71,10 @@ service.interceptors.response.use(
     }
 
     if (response.status === 401) {
+      // 登录时要求动态验证码：交由登录页内联处理，不弹通用「重新登录」框
+      if (typeof dataMsg === 'string' && dataMsg.indexOf('动态验证码') !== -1) {
+        return Promise.reject(error)
+      }
       if (typeof dataMsg === 'string' && dataMsg.indexOf('JWT认证失败') !== -1) {
         MessageBox.confirm(
           '登录失败,用户名或密码错误,重新登录或继续停留在当前页？',

@@ -3,6 +3,7 @@ package tools
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/dashug/ldap-admin-platform/config"
@@ -12,6 +13,13 @@ import (
 
 	"gopkg.in/gomail.v2"
 )
+
+func firstNonEmptyStr(a, b string) string {
+	if strings.TrimSpace(a) != "" {
+		return a
+	}
+	return b
+}
 
 // 验证码放到缓存当中
 var VerificationCodeCache = cache.New(24*time.Hour, 48*time.Hour)
@@ -34,6 +42,32 @@ func email(mailTo []string, subject string, body string) error {
 
 	do := gomail.NewDialer(mailConn["host"], port, mailConn["user"], mailConn["pass"])
 	return do.DialAndSend(newmail)
+}
+
+// SendTestMailWith 用指定 SMTP 参数发送一封测试邮件，留空字段回落到已保存配置。
+// 用于通知设置页「发送测试邮件」：可在保存前验证 SMTP 是否真的可用。
+func SendTestMailWith(host, port, user, pass, from, mailTo string) error {
+	if config.Conf.Email != nil {
+		host = firstNonEmptyStr(host, config.Conf.Email.Host)
+		port = firstNonEmptyStr(port, config.Conf.Email.Port)
+		user = firstNonEmptyStr(user, config.Conf.Email.User)
+		pass = firstNonEmptyStr(pass, config.Conf.Email.Pass)
+		from = firstNonEmptyStr(from, config.Conf.Email.From)
+	}
+	if host == "" || port == "" || user == "" {
+		return fmt.Errorf("SMTP 服务器/端口/发件人邮箱不完整")
+	}
+	p, err := strconv.Atoi(strings.TrimSpace(port))
+	if err != nil {
+		return fmt.Errorf("SMTP 端口无效: %s", port)
+	}
+	m := gomail.NewMessage()
+	m.SetHeader("From", m.FormatAddress(user, from))
+	m.SetHeader("To", mailTo)
+	m.SetHeader("Subject", "LDAP 管理平台 - 测试邮件")
+	m.SetBody("text/html", "<p>这是一封来自 LDAP 管理平台的测试邮件。</p><p>如果你收到了它，说明当前 SMTP 通知配置可用。</p>")
+	d := gomail.NewDialer(host, p, user, pass)
+	return d.DialAndSend(m)
 }
 
 func SendMail(sendto []string, pass string) error {

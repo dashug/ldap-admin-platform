@@ -1,5 +1,22 @@
 package request
 
+// UserBatchImportItem 批量导入的单条用户（密码默认用 LDAP 初始密码，角色默认普通用户）
+type UserBatchImportItem struct {
+	Username  string `json:"username"`
+	Nickname  string `json:"nickname"`
+	GivenName string `json:"givenName"`
+	Mail      string `json:"mail"`
+	Mobile    string `json:"mobile"`
+	JobNumber string `json:"jobNumber"`
+	Position  string `json:"position"`
+}
+
+// UserBatchImportReq 批量导入用户（dryRun=true 仅校验不落库）
+type UserBatchImportReq struct {
+	DryRun bool                  `json:"dryRun"`
+	Users  []UserBatchImportItem `json:"users" validate:"required,min=1,max=1000"`
+}
+
 // UserAddReq 创建资源结构体
 type UserAddReq struct {
 	Username      string `json:"username" validate:"required,min=2,max=50"`
@@ -146,4 +163,5 @@ type UserListReq struct {
 type RegisterAndLoginReq struct {
 	Username string `form:"username" json:"username" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
+	Otp      string `form:"otp" json:"otp"` // 已开启 MFA 的用户登录时填写的 6 位动态验证码
 }

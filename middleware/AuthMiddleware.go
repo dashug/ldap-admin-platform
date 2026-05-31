@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/dashug/ldap-admin-platform/config"
 	"github.com/dashug/ldap-admin-platform/model"
@@ -16,7 +17,12 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
+	"github.com/pquerna/otp/totp"
 )
+
+// ErrMfaRequired 登录时需要二次验证码（前端据此提示输入动态码）。
+// 文案中包含「动态验证码」，前端登录页据此切换到 MFA 输入态。
+var ErrMfaRequired = fmt.Errorf("需要动态验证码")
 
 // 初始化jwt中间件
 func InitAuth() (*jwt.GinJWTMiddleware, error) {
@@ -87,6 +93,16 @@ func login(c *gin.Context) (any, error) {
 	user, err := isql.User.Login(u)
 	if err != nil {
 		return nil, err
+	}
+	// MFA 二次验证：仅对已开启 MFA 的用户生效，其余用户登录流程不变
+	if user.MfaEnabled {
+		code := strings.TrimSpace(req.Otp)
+		if code == "" {
+			return nil, ErrMfaRequired
+		}
+		if !totp.Validate(code, user.OtpSecret) {
+			return nil, fmt.Errorf("动态验证码错误")
+		}
 	}
 	// 将用户以json格式写入, payloadFunc/authorizator会使用到
 	return tools.H{

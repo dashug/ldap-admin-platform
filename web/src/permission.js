@@ -29,7 +29,12 @@ router.beforeEach(async(to, from, next) => {
       // determine whether the user has obtained his permission roles through getInfo
       const hasRoles = store.getters.roles && store.getters.roles.length > 0
       if (hasRoles) {
-        next()
+        // 管理员专属路由（如「设置」分区）：非管理员访问时拦截到 401
+        if (to.matched.some(r => r.meta && r.meta.requireAdmin) && !store.getters.isAdmin) {
+          next('/401')
+        } else {
+          next()
+        }
       } else {
         try {
           // get user info

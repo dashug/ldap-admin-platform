@@ -146,7 +146,7 @@ export default {
       // 保留事件以兼容 PanelGroup 点击
     },
     goConfig() {
-      this.$router.push({ path: '/personnel/user', query: { openConfig: 'directory' } })
+      this.$router.push('/settings/directory')
     },
     async fetchDashboard() {
       try {

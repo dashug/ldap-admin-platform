@@ -54,7 +54,7 @@ export default {
     return { visible: false, query: '', active: 0 }
   },
   computed: {
-    ...mapGetters(['permission_routes']),
+    ...mapGetters(['permission_routes', 'isAdmin']),
     // 导航项：扁平化路由
     navItems() {
       const out = []
@@ -70,6 +70,14 @@ export default {
         })
       }
       walk(this.permission_routes)
+      // 设置分区为隐藏路由，walk 不会收集；管理员手动补充，提升可发现性
+      if (this.isAdmin) {
+        out.push({ type: 'nav', title: '目录配置', path: '/settings/directory', icon: 'Setting', hint: '设置' })
+        out.push({ type: 'nav', title: '平台对接', path: '/settings/thirdparty', icon: 'Connection', hint: '设置' })
+        out.push({ type: 'nav', title: '通知设置', path: '/settings/notification', icon: 'Bell', hint: '设置' })
+        out.push({ type: 'nav', title: '定时同步', path: '/settings/sync', icon: 'Refresh', hint: '设置' })
+        out.push({ type: 'nav', title: '登录安全', path: '/settings/security', icon: 'Lock', hint: '设置' })
+      }
       // 去重
       const seen = new Set()
       return out.filter(i => (seen.has(i.path) ? false : seen.add(i.path)))

@@ -32,20 +32,30 @@
         </router-link>
       </template>
 
-      <!-- 设置（常驻可见的配置入口，提升可发现性） -->
-      <div v-if="!isCollapse" class="nav__section">设置</div>
-      <a class="nav__item" title="目录配置" @click="openSetting('directory')">
-        <el-icon class="nav__icon"><Setting /></el-icon>
-        <span v-if="!isCollapse" class="nav__label">目录配置</span>
-      </a>
-      <a class="nav__item" title="平台对接" @click="openSetting('thirdparty')">
-        <el-icon class="nav__icon"><Connection /></el-icon>
-        <span v-if="!isCollapse" class="nav__label">平台对接</span>
-      </a>
-      <a class="nav__item" title="通知设置" @click="openSetting('notification')">
-        <el-icon class="nav__icon"><Bell /></el-icon>
-        <span v-if="!isCollapse" class="nav__label">通知设置</span>
-      </a>
+      <!-- 设置（管理员可见的配置入口，直接指向独立设置页面） -->
+      <template v-if="isAdmin">
+        <div v-if="!isCollapse" class="nav__section">设置</div>
+        <router-link to="/settings/directory" class="nav__item" :class="{ 'is-active': isActive('/settings/directory') }" title="目录配置">
+          <el-icon class="nav__icon"><Setting /></el-icon>
+          <span v-if="!isCollapse" class="nav__label">目录配置</span>
+        </router-link>
+        <router-link to="/settings/thirdparty" class="nav__item" :class="{ 'is-active': isActive('/settings/thirdparty') }" title="平台对接">
+          <el-icon class="nav__icon"><Connection /></el-icon>
+          <span v-if="!isCollapse" class="nav__label">平台对接</span>
+        </router-link>
+        <router-link to="/settings/notification" class="nav__item" :class="{ 'is-active': isActive('/settings/notification') }" title="通知设置">
+          <el-icon class="nav__icon"><Bell /></el-icon>
+          <span v-if="!isCollapse" class="nav__label">通知设置</span>
+        </router-link>
+        <router-link to="/settings/sync" class="nav__item" :class="{ 'is-active': isActive('/settings/sync') }" title="定时同步">
+          <el-icon class="nav__icon"><Refresh /></el-icon>
+          <span v-if="!isCollapse" class="nav__label">定时同步</span>
+        </router-link>
+        <router-link to="/settings/security" class="nav__item" :class="{ 'is-active': isActive('/settings/security') }" title="登录安全">
+          <el-icon class="nav__icon"><Lock /></el-icon>
+          <span v-if="!isCollapse" class="nav__label">登录安全</span>
+        </router-link>
+      </template>
     </div>
 
     <!-- 用户 -->
@@ -76,7 +86,7 @@ import { mapGetters } from 'vuex'
 export default {
   name: 'AppSidebar',
   computed: {
-    ...mapGetters(['permission_routes', 'sidebar', 'avatar', 'name']),
+    ...mapGetters(['permission_routes', 'sidebar', 'avatar', 'name', 'isAdmin']),
     isCollapse() {
       return !this.sidebar.opened
     },
@@ -142,10 +152,6 @@ export default {
     },
     openCmdk() {
       window.dispatchEvent(new Event('open-cmdk'))
-    },
-    openSetting(type) {
-      // 跳到用户页并自动打开对应配置弹窗（带时间戳确保 keep-alive 下重复点击也生效）
-      this.$router.push({ path: '/personnel/user', query: { openConfig: type, t: Date.now() } }).catch(() => {})
     },
     onUserCommand(cmd) {
       if (cmd === 'profile') this.$router.push('/profile/index').catch(() => {})

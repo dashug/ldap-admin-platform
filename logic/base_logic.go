@@ -1,11 +1,15 @@
 package logic
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
+	"image/png"
 	"strings"
 
 	"github.com/chyroc/lark"
+	"github.com/pquerna/otp/totp"
 	"github.com/dashug/ldap-admin-platform/config"
 	"github.com/dashug/ldap-admin-platform/model"
 	"github.com/dashug/ldap-admin-platform/model/request"
@@ -273,6 +277,9 @@ func (l BaseLogic) GetConfig(c *gin.Context, req any) (data any, rspError any) {
 	}
 	if config.Conf.System != nil {
 		rsp.WebhookURL = config.Conf.System.WebhookURL
+		rsp.WebhookSecretSet = strings.TrimSpace(config.Conf.System.WebhookSecret) != ""
+		rsp.AutoSyncEnabled = config.Conf.System.AutoSyncEnabled
+		rsp.AutoSyncCron = config.Conf.System.AutoSyncCron
 	}
 
 	return rsp, nil
@@ -449,6 +456,34 @@ func (l BaseLogic) UpdateDirectoryConfig(c *gin.Context, req any) (data any, rsp
 	return nil, nil
 }
 
+// TestDirectoryConfig 测试目录（LDAP）连接：使用提交的参数拨号并绑定，不修改任何配置。
+// url/adminDN/adminPass 留空时回落到已保存配置（与「保存」时 adminPass 留空不修改的语义一致）。
+func (l BaseLogic) TestDirectoryConfig(c *gin.Context, req any) (data any, rspError any) {
+	r, ok := req.(*request.BaseTestDirectoryConfigReq)
+	if !ok {
+		return nil, ReqAssertErr
+	}
+	_ = c
+
+	url := strings.TrimSpace(r.Url)
+	adminDN := strings.TrimSpace(r.AdminDN)
+	adminPass := r.AdminPass
+	if config.Conf.Ldap != nil {
+		url = firstNonEmpty(url, config.Conf.Ldap.Url)
+		adminDN = firstNonEmpty(adminDN, config.Conf.Ldap.AdminDN)
+		adminPass = firstNonEmpty(adminPass, config.Conf.Ldap.AdminPass)
+	}
+	if url == "" {
+		return nil, tools.NewValidatorError(fmt.Errorf("LDAP 地址不能为空"))
+	}
+
+	connected, message := common.ProbeLDAPConnectionWith(url, adminDN, adminPass)
+	if !connected {
+		return nil, tools.NewOperationError(fmt.Errorf("%s", message))
+	}
+	return tools.H{"ok": true, "message": message}, nil
+}
+
 // UpdateThirdPartyConfig 更新第三方平台配置
 func (l BaseLogic) UpdateThirdPartyConfig(c *gin.Context, req any) (data any, rspError any) {
 	r, ok := req.(*request.BaseThirdPartyConfigReq)
@@ -602,6 +637,248 @@ func firstNonEmpty(current, fallback string) string {
 	return fallback
 }
 
+// TestNotification 测试通知：发送一封测试邮件，或向 Webhook 地址发送一条测试回调。
+// SMTP / Webhook 字段留空时回落到已保存配置，可在保存前验证可用性。
+func (l BaseLogic) TestNotification(c *gin.Context, req any) (data any, rspError any) {
+	r, ok := req.(*request.BaseTestNotificationReq)
+	if !ok {
+		return nil, ReqAssertErr
+	}
+	_ = c
+
+	switch strings.ToLower(strings.TrimSpace(r.Target)) {
+	case "email":
+		mailTo := strings.TrimSpace(r.Mail)
+		if mailTo == "" {
+			return nil, tools.NewValidatorError(fmt.Errorf("请填写测试收件邮箱"))
+		}
+		if err := tools.SendTestMailWith(r.SmtpHost, r.SmtpPort, r.SmtpUser, r.SmtpPass, r.SmtpFrom, mailTo); err != nil {
+			return nil, tools.NewOperationError(fmt.Errorf("测试邮件发送失败: %s", err.Error()))
+		}
+		return tools.H{"ok": true, "target": "email"}, nil
+	case "webhook":
+		if err := common.TestWebhook(strings.TrimSpace(r.WebhookURL)); err != nil {
+			return nil, tools.NewOperationError(fmt.Errorf("Webhook 测试失败: %s", err.Error()))
+		}
+		return tools.H{"ok": true, "target": "webhook"}, nil
+	default:
+		return nil, tools.NewValidatorError(fmt.Errorf("target 仅支持 email/webhook"))
+	}
+}
+
+// ListWebhookDeliveries 分页查询 Webhook 投递记录（最新在前）
+func (l BaseLogic) ListWebhookDeliveries(c *gin.Context, req any) (data any, rspError any) {
+	r, ok := req.(*request.BaseWebhookDeliveriesReq)
+	if !ok {
+		return nil, ReqAssertErr
+	}
+	_ = c
+	pageNum := r.PageNum
+	if pageNum <= 0 {
+		pageNum = 1
+	}
+	pageSize := r.PageSize
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	var list []model.WebhookDelivery
+	var total int64
+	common.DB.Model(&model.WebhookDelivery{}).Count(&total)
+	if err := common.DB.Order("created_at DESC").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&list).Error; err != nil {
+		return nil, tools.NewMySqlError(fmt.Errorf("查询投递记录失败: %s", err.Error()))
+	}
+	return tools.H{"list": list, "total": total}, nil
+}
+
+// UpdateSyncConfig 更新定时自动同步配置（开关 + cron），保存后热加载调度
+func (l BaseLogic) UpdateSyncConfig(c *gin.Context, req any) (data any, rspError any) {
+	r, ok := req.(*request.BaseUpdateSyncConfigReq)
+	if !ok {
+		return nil, ReqAssertErr
+	}
+	_ = c
+
+	spec := strings.TrimSpace(r.AutoSyncCron)
+	if r.AutoSyncEnabled {
+		if spec == "" {
+			return nil, tools.NewValidatorError(fmt.Errorf("启用定时同步时必须填写 cron 表达式"))
+		}
+		if err := ValidateCron(spec); err != nil {
+			return nil, tools.NewValidatorError(fmt.Errorf("cron 表达式无效（6 段，含秒）: %s", err.Error()))
+		}
+	}
+
+	if config.Conf.System != nil {
+		config.Conf.System.AutoSyncEnabled = r.AutoSyncEnabled
+		config.Conf.System.AutoSyncCron = spec
+	}
+	viper.Set("system.auto-sync-enabled", r.AutoSyncEnabled)
+	viper.Set("system.auto-sync-cron", spec)
+	if err := viper.WriteConfig(); err != nil {
+		return nil, tools.NewOperationError(fmt.Errorf("保存配置文件失败: %s", err.Error()))
+	}
+	if err := ReloadAutoSync(); err != nil {
+		return nil, tools.NewOperationError(fmt.Errorf("重新加载定时任务失败: %s", err.Error()))
+	}
+	return nil, nil
+}
+
+// RunSyncNow 立即异步触发某来源的同步（部门+用户），结果记入同步运行记录
+func (l BaseLogic) RunSyncNow(c *gin.Context, req any) (data any, rspError any) {
+	r, ok := req.(*request.BaseRunSyncReq)
+	if !ok {
+		return nil, ReqAssertErr
+	}
+	_ = c
+	source := strings.TrimSpace(r.Source)
+	go RunSourceSync(source, "manual")
+	return tools.H{"triggered": true, "source": source}, nil
+}
+
+// ListSyncRuns 分页查询同步运行记录（最新在前）
+func (l BaseLogic) ListSyncRuns(c *gin.Context, req any) (data any, rspError any) {
+	r, ok := req.(*request.BaseSyncRunsReq)
+	if !ok {
+		return nil, ReqAssertErr
+	}
+	_ = c
+	pageNum := r.PageNum
+	if pageNum <= 0 {
+		pageNum = 1
+	}
+	pageSize := r.PageSize
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	var list []model.SyncRun
+	var total int64
+	common.DB.Model(&model.SyncRun{}).Count(&total)
+	if err := common.DB.Order("created_at DESC").Offset((pageNum - 1) * pageSize).Limit(pageSize).Find(&list).Error; err != nil {
+		return nil, tools.NewMySqlError(fmt.Errorf("查询同步记录失败: %s", err.Error()))
+	}
+	return tools.H{"list": list, "total": total}, nil
+}
+
+// currentUserFromCtx 从上下文取出当前登录用户（由 AuthMiddleware 的 authorizator 写入）
+func currentUserFromCtx(c *gin.Context) (model.User, error) {
+	v, ok := c.Get("user")
+	if !ok {
+		return model.User{}, fmt.Errorf("未获取到登录用户")
+	}
+	u, ok := v.(model.User)
+	if !ok {
+		return model.User{}, fmt.Errorf("登录用户信息异常")
+	}
+	return u, nil
+}
+
+// MfaStatus 查询当前用户 MFA 启用状态
+func (l BaseLogic) MfaStatus(c *gin.Context, req any) (data any, rspError any) {
+	if _, ok := req.(*request.BaseMfaStatusReq); !ok {
+		return nil, ReqAssertErr
+	}
+	ctxUser, err := currentUserFromCtx(c)
+	if err != nil {
+		return nil, tools.NewValidatorError(err)
+	}
+	var user model.User
+	if err := common.DB.First(&user, ctxUser.ID).Error; err != nil {
+		return nil, tools.NewMySqlError(fmt.Errorf("查询用户失败: %s", err.Error()))
+	}
+	return tools.H{"enabled": user.MfaEnabled}, nil
+}
+
+// MfaSetup 生成一个新的 TOTP 密钥并返回二维码（此时仅为待验证状态，需校验后才启用）
+func (l BaseLogic) MfaSetup(c *gin.Context, req any) (data any, rspError any) {
+	if _, ok := req.(*request.BaseMfaSetupReq); !ok {
+		return nil, ReqAssertErr
+	}
+	ctxUser, err := currentUserFromCtx(c)
+	if err != nil {
+		return nil, tools.NewValidatorError(err)
+	}
+	var user model.User
+	if err := common.DB.First(&user, ctxUser.ID).Error; err != nil {
+		return nil, tools.NewMySqlError(fmt.Errorf("查询用户失败: %s", err.Error()))
+	}
+	key, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      "LDAP 管理平台",
+		AccountName: user.Username,
+	})
+	if err != nil {
+		return nil, tools.NewOperationError(fmt.Errorf("生成 MFA 密钥失败: %s", err.Error()))
+	}
+	// 暂存待验证密钥（mfa_enabled 保持 false，校验通过后才真正启用）
+	if err := common.DB.Model(&model.User{}).Where("id = ?", user.ID).
+		Updates(map[string]any{"otp_secret": key.Secret(), "mfa_enabled": false}).Error; err != nil {
+		return nil, tools.NewMySqlError(fmt.Errorf("保存 MFA 密钥失败: %s", err.Error()))
+	}
+	// 生成二维码 PNG（base64 内嵌，前端 <img> 直接展示）
+	img, err := key.Image(220, 220)
+	if err != nil {
+		return nil, tools.NewOperationError(fmt.Errorf("生成二维码失败: %s", err.Error()))
+	}
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return nil, tools.NewOperationError(fmt.Errorf("编码二维码失败: %s", err.Error()))
+	}
+	qr := "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes())
+	return tools.H{"secret": key.Secret(), "qr": qr, "otpauthUrl": key.URL()}, nil
+}
+
+// MfaVerify 校验动态验证码并启用 MFA
+func (l BaseLogic) MfaVerify(c *gin.Context, req any) (data any, rspError any) {
+	r, ok := req.(*request.BaseMfaCodeReq)
+	if !ok {
+		return nil, ReqAssertErr
+	}
+	ctxUser, err := currentUserFromCtx(c)
+	if err != nil {
+		return nil, tools.NewValidatorError(err)
+	}
+	var user model.User
+	if err := common.DB.First(&user, ctxUser.ID).Error; err != nil {
+		return nil, tools.NewMySqlError(fmt.Errorf("查询用户失败: %s", err.Error()))
+	}
+	if strings.TrimSpace(user.OtpSecret) == "" {
+		return nil, tools.NewValidatorError(fmt.Errorf("请先生成 MFA 密钥"))
+	}
+	if !totp.Validate(strings.TrimSpace(r.Code), user.OtpSecret) {
+		return nil, tools.NewValidatorError(fmt.Errorf("验证码错误，请重试"))
+	}
+	if err := common.DB.Model(&model.User{}).Where("id = ?", user.ID).Update("mfa_enabled", true).Error; err != nil {
+		return nil, tools.NewMySqlError(fmt.Errorf("启用 MFA 失败: %s", err.Error()))
+	}
+	return tools.H{"enabled": true}, nil
+}
+
+// MfaDisable 关闭 MFA（需提供有效验证码以确认本人操作）
+func (l BaseLogic) MfaDisable(c *gin.Context, req any) (data any, rspError any) {
+	r, ok := req.(*request.BaseMfaCodeReq)
+	if !ok {
+		return nil, ReqAssertErr
+	}
+	ctxUser, err := currentUserFromCtx(c)
+	if err != nil {
+		return nil, tools.NewValidatorError(err)
+	}
+	var user model.User
+	if err := common.DB.First(&user, ctxUser.ID).Error; err != nil {
+		return nil, tools.NewMySqlError(fmt.Errorf("查询用户失败: %s", err.Error()))
+	}
+	if !user.MfaEnabled {
+		return tools.H{"enabled": false}, nil
+	}
+	if !totp.Validate(strings.TrimSpace(r.Code), user.OtpSecret) {
+		return nil, tools.NewValidatorError(fmt.Errorf("验证码错误，无法关闭"))
+	}
+	if err := common.DB.Model(&model.User{}).Where("id = ?", user.ID).
+		Updates(map[string]any{"mfa_enabled": false, "otp_secret": ""}).Error; err != nil {
+		return nil, tools.NewMySqlError(fmt.Errorf("关闭 MFA 失败: %s", err.Error()))
+	}
+	return tools.H{"enabled": false}, nil
+}
+
 // UpdateEmailConfig 更新邮件通知配置（开关 + 邮件服务器）
 func (l BaseLogic) UpdateEmailConfig(c *gin.Context, req any) (data any, rspError any) {
 	r, ok := req.(*request.BaseUpdateEmailConfigReq)
@@ -637,6 +914,11 @@ func (l BaseLogic) UpdateEmailConfig(c *gin.Context, req any) (data any, rspErro
 	if config.Conf.System != nil {
 		config.Conf.System.WebhookURL = strings.TrimSpace(r.WebhookURL)
 		viper.Set("system.webhook-url", config.Conf.System.WebhookURL)
+		// 签名密钥：留空表示不修改（与各类密码字段一致）
+		if strings.TrimSpace(r.WebhookSecret) != "" {
+			config.Conf.System.WebhookSecret = strings.TrimSpace(r.WebhookSecret)
+			viper.Set("system.webhook-secret", config.Conf.System.WebhookSecret)
+		}
 	}
 	if err := viper.WriteConfig(); err != nil {
 		return nil, tools.NewOperationError(fmt.Errorf("保存配置文件失败: %s", err.Error()))

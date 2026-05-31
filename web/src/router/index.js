@@ -117,7 +117,48 @@ export const constantRoutes = [
         meta: { title: '分组成员', icon: 'user', noCache: true }
       }
     ]
-  
+
+  },
+  {
+    // 设置分区：侧边栏「设置」常驻入口指向的独立配置页面。
+    // hidden=true，避免与侧边栏中硬编码的「设置」分组重复出现。
+    path: '/settings',
+    component: Layout,
+    redirect: '/settings/directory',
+    hidden: true,
+    meta: { title: '设置', icon: 'setting', requireAdmin: true },
+    children: [
+      {
+        path: 'directory',
+        component: () => import('@/views/settings/directory/index.vue'),
+        name: 'SettingsDirectory',
+        meta: { title: '目录配置', icon: 'setting', noCache: true }
+      },
+      {
+        path: 'thirdparty',
+        component: () => import('@/views/settings/thirdParty/index.vue'),
+        name: 'SettingsThirdParty',
+        meta: { title: '平台对接', icon: 'connection', noCache: true }
+      },
+      {
+        path: 'notification',
+        component: () => import('@/views/settings/notification/index.vue'),
+        name: 'SettingsNotification',
+        meta: { title: '通知设置', icon: 'bell', noCache: true }
+      },
+      {
+        path: 'sync',
+        component: () => import('@/views/settings/sync/index.vue'),
+        name: 'SettingsSync',
+        meta: { title: '定时同步', icon: 'refresh', noCache: true }
+      },
+      {
+        path: 'security',
+        component: () => import('@/views/settings/security/index.vue'),
+        name: 'SettingsSecurity',
+        meta: { title: '登录安全', icon: 'lock', noCache: true }
+      }
+    ]
   },
 
 ]

@@ -124,6 +124,123 @@ func (l UserLogic) Add(c *gin.Context, req any) (data any, rspError any) {
 	return nil, nil
 }
 
+// BatchImport 批量导入用户（CSV/Excel）。dryRun=true 仅逐行校验不落库。
+// 密码统一用 LDAP 初始密码，角色默认普通用户(ID=2)，不指定部门（可后续编辑）。
+func (l UserLogic) BatchImport(c *gin.Context, req any) (data any, rspError any) {
+	r, ok := req.(*request.UserBatchImportReq)
+	if !ok {
+		return nil, ReqAssertErr
+	}
+
+	_, ctxUser, err := isql.User.GetCurrentUserMinRoleSort(c)
+	if err != nil {
+		return nil, tools.NewValidatorError(fmt.Errorf("获取当前登录用户失败"))
+	}
+	roles, err := isql.Role.GetRolesByIds([]uint{2})
+	if err != nil {
+		return nil, tools.NewValidatorError(fmt.Errorf("获取默认角色失败"))
+	}
+
+	type rowResult struct {
+		Row      int    `json:"row"`
+		Username string `json:"username"`
+		OK       bool   `json:"ok"`
+		Message  string `json:"message"`
+	}
+	results := make([]rowResult, 0, len(r.Users))
+	okCount, failCount := 0, 0
+	// 批次内查重（避免同一文件内重复）
+	seenUser := make(map[string]bool)
+	seenMail := make(map[string]bool)
+
+	for i, it := range r.Users {
+		username := strings.TrimSpace(it.Username)
+		mail := strings.TrimSpace(it.Mail)
+		jobNumber := strings.TrimSpace(it.JobNumber)
+		res := rowResult{Row: i + 1, Username: username}
+
+		// 必填校验
+		msg := ""
+		switch {
+		case username == "":
+			msg = "用户名为空"
+		case strings.TrimSpace(it.Nickname) == "":
+			msg = "中文名为空"
+		case mail == "":
+			msg = "邮箱为空"
+		case jobNumber == "":
+			msg = "工号为空"
+		}
+		// 查重（批次内 + 数据库）
+		if msg == "" {
+			if seenUser[username] {
+				msg = "文件内用户名重复"
+			} else if isql.User.Exist(tools.H{"username": username}) {
+				msg = "用户名已存在"
+			} else if seenMail[mail] {
+				msg = "文件内邮箱重复"
+			} else if isql.User.Exist(tools.H{"mail": mail}) {
+				msg = "邮箱已存在"
+			} else if isql.User.Exist(tools.H{"job_number": jobNumber}) {
+				msg = "工号已存在"
+			}
+		}
+		if msg != "" {
+			res.OK = false
+			res.Message = msg
+			results = append(results, res)
+			failCount++
+			continue
+		}
+
+		seenUser[username] = true
+		seenMail[mail] = true
+
+		if r.DryRun {
+			res.OK = true
+			res.Message = "可导入"
+			results = append(results, res)
+			okCount++
+			continue
+		}
+
+		user := model.User{
+			Username:  username,
+			Password:  config.Conf.Ldap.UserInitPassword,
+			Nickname:  strings.TrimSpace(it.Nickname),
+			GivenName: strings.TrimSpace(it.GivenName),
+			Mail:      mail,
+			JobNumber: jobNumber,
+			Mobile:    strings.TrimSpace(it.Mobile),
+			Position:  strings.TrimSpace(it.Position),
+			Status:    1,
+			Creator:   ctxUser.Username,
+			Source:    "import",
+			Roles:     roles,
+			UserDN:    ildap.BuildUserDN(username),
+		}
+		if e := CommonAddUser(&user, nil); e != nil {
+			res.OK = false
+			res.Message = e.Error()
+			results = append(results, res)
+			failCount++
+			continue
+		}
+		res.OK = true
+		res.Message = "导入成功"
+		results = append(results, res)
+		okCount++
+	}
+
+	return tools.H{
+		"dryRun":    r.DryRun,
+		"total":     len(r.Users),
+		"okCount":   okCount,
+		"failCount": failCount,
+		"results":   results,
+	}, nil
+}
+
 // List 数据列表
 func (l UserLogic) List(c *gin.Context, req any) (data any, rspError any) {
 	r, ok := req.(*request.UserListReq)
