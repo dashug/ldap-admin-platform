@@ -10,6 +10,7 @@ go-ldap-admin
 tmp
 docs/docker-compose/data
 data
+.docker-data
 bin
 release
 .worktrees

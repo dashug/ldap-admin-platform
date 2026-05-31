@@ -1,0 +1,78 @@
+# 一键起一套完整环境：从源码构建本 fork 的镜像（前端已 embed） + OpenLDAP。
+#   docker compose up -d --build
+# 访问： http://localhost:8888  （默认管理员 admin / 123456）
+#
+# 数据库默认 sqlite（无需额外服务）；如需 MySQL，取消下方 mysql 服务注释，
+# 并把 deploy/docker/config.yml 的 database.driver 改为 mysql。
+
+services:
+  go-ldap-admin:
+    build:
+      context: .
+      args:
+        VERSION: docker-compose
+    image: go-ldap-admin:local
+    container_name: go-ldap-admin
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    volumes:
+      # 覆盖镜像内置配置（指向 openldap 服务、sqlite 等）
+      - ./deploy/docker/config.yml:/app/config.yml:ro
+      # 持久化数据库与日志
+      - ./.docker-data/app:/app/data
+    depends_on:
+      - openldap
+    networks:
+      - ldap-admin
+
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: go-ldap-admin-openldap
+    restart: unless-stopped
+    environment:
+      LDAP_ORGANISATION: "example"
+      LDAP_DOMAIN: "example.com"
+      LDAP_ADMIN_PASSWORD: "123456"
+    ports:
+      - "389:389"
+    volumes:
+      - ./.docker-data/openldap/data:/var/lib/ldap
+      - ./.docker-data/openldap/config:/etc/ldap/slapd.d
+    networks:
+      - ldap-admin
+
+  # 可选：可视化查看 LDAP 目录
+  # phpldapadmin:
+  #   image: osixia/phpldapadmin:0.9.0
+  #   container_name: go-ldap-admin-phpldapadmin
+  #   restart: unless-stopped
+  #   environment:
+  #     PHPLDAPADMIN_LDAP_HOSTS: openldap
+  #     PHPLDAPADMIN_HTTPS: "false"
+  #   ports:
+  #     - "8091:80"
+  #   depends_on:
+  #     - openldap
+  #   networks:
+  #     - ldap-admin
+
+  # 可选：使用 MySQL 而非 sqlite（记得改 deploy/docker/config.yml）
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: go-ldap-admin-mysql
+  #   restart: unless-stopped
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: "123456"
+  #     MYSQL_DATABASE: go_ldap_admin
+  #   command: --default-authentication-plugin=mysql_native_password
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - ./.docker-data/mysql:/var/lib/mysql
+  #   networks:
+  #     - ldap-admin
+
+networks:
+  ldap-admin:
+    driver: bridge

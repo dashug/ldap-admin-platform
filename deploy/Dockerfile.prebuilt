@@ -1,0 +1,24 @@
+# 旧版（上游）Dockerfile：仅打包【已预编译】的二进制，需先 `make all` 并把产物放到 bin/。
+# 保留以兼容原有发布流水线。新部署请使用项目根目录的多阶段 Dockerfile（一步构建，无需预编译）。
+FROM docker.cnb.cool/znb/images/alpine
+
+WORKDIR /app
+LABEL maintainer=eryajf@163.com
+
+ENV TZ=Asia/Shanghai
+ENV BINARY_NAME=go-ldap-admin
+
+ARG TARGETOS
+ARG TARGETARCH
+
+COPY LICENSE .
+COPY config.yml .
+COPY bin/${BINARY_NAME}_${TARGETOS}_${TARGETARCH} ${BINARY_NAME}
+COPY --from=docker.cnb.cool/znb/images/docker-compose-wait /wait .
+
+RUN chmod +x wait go-ldap-admin &&\
+    sed -i 's@localhost:389@openldap:389@g' /app/config.yml \
+    && sed -i 's@host: localhost@host: mysql@g'  /app/config.yml
+
+# see wait repo: https://github.com/ufoscout/docker-compose-wait
+CMD ./wait && ./go-ldap-admin
