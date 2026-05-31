@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -440,10 +441,10 @@ func (l UserLogic) Delete(c *gin.Context, req any) (data any, rspError any) {
 		return nil, tools.NewMySqlError(fmt.Errorf("%s", "获取用户信息失败: "+err.Error()))
 	}
 
-	// 先将用户从ldap中删除
+	// 先将用户从ldap中删除（LDAP 未连接时跳过，仅删除 MySQL —— 与新建用户的处理保持一致）
 	for _, user := range users {
 		err := ildap.User.Delete(user.UserDN)
-		if err != nil {
+		if err != nil && !errors.Is(err, common.ErrLDAPDisabled) {
 			return nil, tools.NewLdapError(fmt.Errorf("%s", "在LDAP删除用户失败"+err.Error()))
 		}
 	}
@@ -487,7 +488,7 @@ func (l UserLogic) ChangePwd(c *gin.Context, req any) (data any, rspError any) {
 	}
 	// ldap更新密码时可以直接指定用户DN和新密码即可更改成功
 	err = ildap.User.ChangePwd(user.UserDN, "", r.NewPassword)
-	if err != nil {
+	if err != nil && !errors.Is(err, common.ErrLDAPDisabled) {
 		return nil, tools.NewLdapError(fmt.Errorf("%s", "在LDAP更新密码失败"+err.Error()))
 	}
 
@@ -523,9 +524,9 @@ func (l UserLogic) ResetPassword(c *gin.Context, req any) (data any, rspError an
 	// 生成随机密码
 	newPassword := tools.GenerateRandomPassword()
 
-	// 在LDAP中更新密码
+	// 在LDAP中更新密码（LDAP 未连接时跳过，仅更新 MySQL）
 	err = ildap.User.ChangePwd(user.UserDN, "", newPassword)
-	if err != nil {
+	if err != nil && !errors.Is(err, common.ErrLDAPDisabled) {
 		return nil, tools.NewLdapError(fmt.Errorf("在LDAP更新密码失败: %s", err.Error()))
 	}
 
@@ -581,12 +582,12 @@ func (l UserLogic) ChangeUserStatus(c *gin.Context, req any) (data any, rspError
 
 	if r.Status == 2 {
 		err = ildap.User.Delete(user.UserDN)
-		if err != nil {
+		if err != nil && !errors.Is(err, common.ErrLDAPDisabled) {
 			return nil, tools.NewLdapError(fmt.Errorf("%s", "在LDAP删除用户失败"+err.Error()))
 		}
 	} else {
 		err = ildap.User.Add(user)
-		if err != nil {
+		if err != nil && !errors.Is(err, common.ErrLDAPDisabled) {
 			return nil, tools.NewLdapError(fmt.Errorf("%s", "在LDAP添加用户失败"+err.Error()))
 		}
 	}
