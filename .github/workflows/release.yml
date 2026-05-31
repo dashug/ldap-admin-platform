@@ -53,9 +53,11 @@ jobs:
         run: |
           mkdir -p dist
           BINARY=go-ldap-admin
-          LDFLAGS="-X github.com/dashug/ldap-admin-platform/public/version.Version=${VERSION} \
-            -X github.com/dashug/ldap-admin-platform/public/version.GitCommit=${GITHUB_SHA::7} \
-            -X github.com/dashug/ldap-admin-platform/public/version.BuildTime=$(date -u '+%Y-%m-%d %H:%M:%S')"
+          BUILD_TIME=$(date -u '+%Y-%m-%d %H:%M:%S')
+          # 每个 -X 值单独加单引号：BuildTime 含空格，不加引号会被链接器当成多余参数（导致链接失败）
+          LDFLAGS="-X 'github.com/dashug/ldap-admin-platform/public/version.Version=${VERSION}' \
+            -X 'github.com/dashug/ldap-admin-platform/public/version.GitCommit=${GITHUB_SHA::7}' \
+            -X 'github.com/dashug/ldap-admin-platform/public/version.BuildTime=${BUILD_TIME}'"
 
           GOOS=linux   GOARCH=amd64 go build -ldflags "$LDFLAGS" -o dist/${BINARY}_linux_amd64   main.go
           GOOS=linux   GOARCH=arm64 go build -ldflags "$LDFLAGS" -o dist/${BINARY}_linux_arm64   main.go
