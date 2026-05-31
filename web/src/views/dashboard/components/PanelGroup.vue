@@ -1,25 +1,21 @@
 <template>
-  <el-row :gutter="40" class="panel-group">
-    <el-col v-for="item in listData" :key="item.dataType" :xs="8" :sm="8" :lg="8" class="card-panel-col">
-      <a :href="item.path">
-      <div class="card-panel" @click="handleSetLineChartData(item.dataType)">
-        <div class="card-panel-icon-wrapper icon-people">
-          <svg-icon :icon-class="item.icon" class-name="card-panel-icon" />
+  <el-row :gutter="16" class="panel-group">
+    <el-col v-for="(item, i) in listData" :key="item.dataType" :xs="12" :sm="8" :lg="4" class="card-panel-col">
+      <div class="stat-card" @click="handleSetLineChartData(item.dataType)">
+        <div class="stat-card__icon" :style="{ background: palette[i % palette.length].bg, color: palette[i % palette.length].fg }">
+          <svg-icon :icon-class="item.icon" class-name="stat-card__svg" />
         </div>
-        <div class="card-panel-description">
-          <div class="card-panel-text">
-              {{ item.dataName }}
-          </div>
-          <count-to :start-val="0" :end-val="item.dataCount" :duration="2600" class="card-panel-num" />
+        <div class="stat-card__body">
+          <div class="stat-card__label">{{ item.dataName }}</div>
+          <count-to :start-val="0" :end-val="item.dataCount" :duration="2000" class="stat-card__num" />
         </div>
       </div>
-    </a>
     </el-col>
   </el-row>
 </template>
 
 <script>
-import CountTo from 'vue-count-to'
+import CountTo from '@/components/CountTo/index.vue'
 import { getDash } from '@/api/dashboards/dashboard'
 export default {
   components: {
@@ -33,7 +29,15 @@ export default {
   },
   data() {
     return {
-      localData: []
+      localData: [],
+      palette: [
+        { bg: 'rgba(79, 70, 229, 0.10)', fg: '#4f46e5' },
+        { bg: 'rgba(14, 165, 233, 0.10)', fg: '#0ea5e9' },
+        { bg: 'rgba(16, 185, 129, 0.12)', fg: '#10b981' },
+        { bg: 'rgba(245, 158, 11, 0.14)', fg: '#f59e0b' },
+        { bg: 'rgba(139, 92, 246, 0.12)', fg: '#8b5cf6' },
+        { bg: 'rgba(244, 63, 94, 0.10)', fg: '#f43f5e' }
+      ]
     }
   },
   computed: {
@@ -62,99 +66,62 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "~@/styles/variables.scss";
+@import "@/styles/variables.scss";
 
 .panel-group {
-  margin-top: 0;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 
   .card-panel-col {
-    margin-bottom: 20px;
-  }
-
-  .card-panel {
-    height: 120px;
-    cursor: pointer;
-    font-size: $fontSizeSmall;
-    position: relative;
-    overflow: hidden;
-    color: $slate600;
-    background: #fff;
-    border-radius: $cardRadius;
-    border: 1px solid $borderColor;
-    box-shadow: $cardShadow;
-    transition: box-shadow $transitionBase, transform $transitionBase, border-color $transitionBase;
-
-    &:hover {
-      box-shadow: $cardShadowHover;
-      transform: translateY(-4px);
-      border-color: $slate300;
-
-      .card-panel-icon-wrapper {
-        color: #fff;
-      }
-      .icon-people { background: $themePrimary; }
-      .icon-message { background: #0ea5e9; }
-      .icon-money { background: $themeDanger; }
-      .icon-shopping { background: $themeSuccess; }
-    }
-
-    .icon-people { color: $themePrimary; }
-    .icon-message { color: #0ea5e9; }
-    .icon-money { color: $themeDanger; }
-    .icon-shopping { color: $themeSuccess; }
-
-    .card-panel-icon-wrapper {
-      float: left;
-      margin: 20px 0 0 20px;
-      padding: 18px;
-      transition: all $transitionBase;
-      border-radius: 12px;
-    }
-
-    .card-panel-icon {
-      float: left;
-      font-size: 44px;
-    }
-
-    .card-panel-description {
-      float: right;
-      font-weight: $fontWeightSemibold;
-      margin: 28px 24px 28px 0;
-
-      .card-panel-text {
-        line-height: 1.4;
-        color: $slate500;
-        font-size: 15px;
-        margin-bottom: 10px;
-      }
-
-      .card-panel-num {
-        font-size: 24px;
-        font-weight: 700;
-        color: $slate800;
-        letter-spacing: -0.02em;
-      }
-    }
+    margin-bottom: 16px;
   }
 }
 
-@media (max-width:550px) {
-  .card-panel-description {
-    display: none;
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid $borderColor;
+  box-shadow: $cardShadow;
+  cursor: pointer;
+  transition: box-shadow $transitionBase, transform $transitionBase, border-color $transitionBase;
+
+  &:hover {
+    box-shadow: $cardShadowHover;
+    transform: translateY(-3px);
+    border-color: transparent;
   }
 
-  .card-panel-icon-wrapper {
-    float: none !important;
-    width: 100%;
-    height: 100%;
-    margin: 0 !important;
+  &__icon {
+    flex: none;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+  }
+  &__svg { font-size: 24px; }
 
-    .svg-icon {
-      display: block;
-      margin: 14px auto !important;
-      float: none !important;
-    }
+  &__body { min-width: 0; }
+  &__label {
+    font-size: 13px;
+    color: $slate500;
+    font-weight: $fontWeightMedium;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  &__num {
+    font-size: 26px;
+    font-weight: $fontWeightBold;
+    color: $slate900;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
   }
 }
 </style>

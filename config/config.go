@@ -145,8 +145,16 @@ type SystemConfig struct {
 	InitData        bool   `mapstructure:"init-data" json:"initData"`
 	InactiveDays    int    `mapstructure:"inactive-days" json:"inactiveDays"`   // 账户过期策略：N 天未登录自动禁用，0 表示关闭
 	WebhookURL      string `mapstructure:"webhook-url" json:"webhookUrl"`      // 用户/部门创建或同步后 HTTP 回调地址，空则不发
-	RSAPublicBytes  []byte `mapstructure:"-" json:"-"`
-	RSAPrivateBytes []byte `mapstructure:"-" json:"-"`
+	WebhookSecret   string `mapstructure:"webhook-secret" json:"-"`           // Webhook HMAC-SHA256 签名密钥，空则不签名
+	AutoSyncEnabled bool   `mapstructure:"auto-sync-enabled" json:"autoSyncEnabled"` // 是否启用定时自动同步
+	AutoSyncCron    string `mapstructure:"auto-sync-cron" json:"autoSyncCron"`       // 定时同步 cron 表达式（robfig/cron，6 段，含秒）
+	// 允许跨域的来源白名单。
+	//  - 为空（默认）：单二进制同源部署，不下发任何跨域响应头（最安全）
+	//  - ["*"]      ：放行所有来源（仅在确有需要时使用）
+	//  - 指定来源    ：仅对命中白名单的 Origin 回显该来源
+	AllowOrigins    []string `mapstructure:"allow-origins" json:"allowOrigins"`
+	RSAPublicBytes  []byte   `mapstructure:"-" json:"-"`
+	RSAPrivateBytes []byte   `mapstructure:"-" json:"-"`
 }
 
 type LogsConfig struct {

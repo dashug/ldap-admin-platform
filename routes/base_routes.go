@@ -46,9 +46,11 @@ func InitBaseRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) gi
 	base := r.Group("/base")
 	{
 		base.GET("ping", controller.Demo)
-		base.GET("encryptpwd", controller.Base.EncryptPasswd) // 生成加密密码
-		base.GET("decryptpwd", controller.Base.DecryptPasswd) // 密码解密为明文
-		base.GET("publicKey", controller.Base.GetPublicKey)   // 获取登录用 RSA 公钥（无需鉴权）
+		// 生成加密密码：属于运维/调试工具，必须登录后才能使用，避免成为离线攻击辅助接口
+		base.GET("encryptpwd", authMiddleware.MiddlewareFunc(), controller.Base.EncryptPasswd)
+		// 说明：原 decryptpwd（把密文还原为明文）已移除——它是一个无鉴权的明文还原 oracle，
+		// 配合数据库中可逆存储的密码会造成明文泄露，且前后端均未使用。
+		base.GET("publicKey", controller.Base.GetPublicKey) // 获取登录用 RSA 公钥（无需鉴权）
 		base.GET("config", controller.Base.GetConfig)         // 获取系统配置
 		base.GET("ldapStatus", controller.Base.GetLDAPStatus)   // LDAP 连接状态
 		base.GET("systemInfo", controller.Base.GetSystemInfo)  // 系统信息（版本、运行时长、DB）
@@ -61,10 +63,21 @@ func InitBaseRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) gi
 		base.POST("/changePwd", controller.Base.ChangePwd) // 修改用户密码
 		base.GET("/dashboard", controller.Base.Dashboard)  // 系统首页展示数据
 		base.POST("/directoryConfig", authMiddleware.MiddlewareFunc(), controller.Base.UpdateDirectoryConfig)
+		base.POST("/directoryConfig/test", authMiddleware.MiddlewareFunc(), controller.Base.TestDirectoryConfig)
 		base.POST("/configImport", authMiddleware.MiddlewareFunc(), controller.Base.ImportConfig)
 		base.POST("/thirdPartyConfig", authMiddleware.MiddlewareFunc(), controller.Base.UpdateThirdPartyConfig)
 		base.POST("/thirdPartyConfig/test", authMiddleware.MiddlewareFunc(), controller.Base.TestThirdPartyConfig)
 		base.POST("/emailConfig", authMiddleware.MiddlewareFunc(), controller.Base.UpdateEmailConfig)
+		base.POST("/emailConfig/test", authMiddleware.MiddlewareFunc(), controller.Base.TestNotification)
+		base.GET("/webhookDeliveries", authMiddleware.MiddlewareFunc(), controller.Base.ListWebhookDeliveries)
+		base.POST("/syncConfig", authMiddleware.MiddlewareFunc(), controller.Base.UpdateSyncConfig)
+		base.POST("/syncRun", authMiddleware.MiddlewareFunc(), controller.Base.RunSyncNow)
+		base.GET("/syncRuns", authMiddleware.MiddlewareFunc(), controller.Base.ListSyncRuns)
+		base.POST("/userBatchImport", authMiddleware.MiddlewareFunc(), controller.Base.UserBatchImport)
+		base.GET("/mfa/status", authMiddleware.MiddlewareFunc(), controller.Base.MfaStatus)
+		base.POST("/mfa/setup", authMiddleware.MiddlewareFunc(), controller.Base.MfaSetup)
+		base.POST("/mfa/verify", authMiddleware.MiddlewareFunc(), controller.Base.MfaVerify)
+		base.POST("/mfa/disable", authMiddleware.MiddlewareFunc(), controller.Base.MfaDisable)
 	}
 	return r
 }

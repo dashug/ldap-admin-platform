@@ -1,10 +1,12 @@
 <template>
   <section class="app-main">
-    <transition name="fade-transform" mode="out-in">
-      <keep-alive :include="cachedViews">
-        <router-view :key="key" />
-      </keep-alive>
-    </transition>
+    <router-view v-slot="{ Component }">
+      <transition name="fade-transform" mode="out-in">
+        <keep-alive :include="cachedViews">
+          <component :is="Component" :key="key" />
+        </keep-alive>
+      </transition>
+    </router-view>
     <el-footer  class="footer-copyright">
       <div>
         <span>Since 2022 </span>
@@ -38,7 +40,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "~@/styles/variables.scss";
+@import "@/styles/variables.scss";
 
 .app-main {
   min-height: calc(100vh - #{$headerHeight});

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { MessageBox, Message } from 'element-ui'
+import { ElMessageBox as MessageBox, ElMessage as Message } from 'element-plus'
 import store from '@/store'
 // import router from '@/router'
 import { getToken } from '@/utils/auth'
@@ -7,7 +7,7 @@ import router from '@/router'
 
 // create an axios instance
 const service = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' ? process.env.VUE_APP_BASE_API : '/', // api 的 base_url
+  baseURL: import.meta.env.PROD ? (import.meta.env.VITE_APP_BASE_API || '/') : '/', // api 的 base_url
   // withCredentials: true, // send cookies when cross-domain requests
   // timeout: 5000 // request timeout
 })
@@ -71,6 +71,10 @@ service.interceptors.response.use(
     }
 
     if (response.status === 401) {
+      // 登录时要求动态验证码：交由登录页内联处理，不弹通用「重新登录」框
+      if (typeof dataMsg === 'string' && dataMsg.indexOf('动态验证码') !== -1) {
+        return Promise.reject(error)
+      }
       if (typeof dataMsg === 'string' && dataMsg.indexOf('JWT认证失败') !== -1) {
         MessageBox.confirm(
           '登录失败,用户名或密码错误,重新登录或继续停留在当前页？',

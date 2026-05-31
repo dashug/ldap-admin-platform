@@ -1,49 +1,85 @@
 <template>
   <div class="login-container">
-    <div class="login-bg" />
-    <div class="login-card">
-      <div class="login-header">
-        <h1 class="login-title">LDAP 管理平台</h1>
-        <p class="login-desc">统一身份与目录管理</p>
+    <!-- 左侧品牌栏（窄屏隐藏） -->
+    <aside class="login-brand">
+      <div class="brand-deco brand-deco--1" />
+      <div class="brand-deco brand-deco--2" />
+      <div class="brand-inner">
+        <div class="brand-logo">
+          <el-icon :size="26"><Connection /></el-icon>
+        </div>
+        <h1 class="brand-title">LDAP 管理平台</h1>
+        <p class="brand-tagline">面向 OpenLDAP / Active Directory 的统一身份与目录管理</p>
+        <ul class="brand-features">
+          <li><el-icon><Select /></el-icon> OpenLDAP / AD 用户与组织统一管理</li>
+          <li><el-icon><Select /></el-icon> 基于 Casbin 的 RBAC 与操作审计</li>
+          <li><el-icon><Select /></el-icon> 钉钉 / 企业微信 / 飞书 一键同步</li>
+        </ul>
       </div>
-      <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" autocomplete="on" label-position="top" @submit.native.prevent="handleLogin">
-        <el-form-item prop="username">
-          <el-input
-            ref="username"
-            v-model="loginForm.username"
-            placeholder="请输入用户名"
-            name="username"
-            type="text"
-            tabindex="1"
-            autocomplete="on"
-            prefix-icon="el-icon-user"
-          />
-        </el-form-item>
-        <el-tooltip v-model="capsTooltip" content="Caps Lock 已打开" placement="top" manual>
-          <el-form-item prop="password">
+      <p class="brand-footer">Powered by LDAP 管理平台 · 前后端一体</p>
+    </aside>
+
+    <!-- 右侧登录表单 -->
+    <section class="login-panel">
+      <div class="login-card">
+        <div class="login-header">
+          <h2 class="login-title">欢迎回来 👋</h2>
+          <p class="login-desc">请登录以继续使用管理后台</p>
+        </div>
+        <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" autocomplete="on" label-position="top" @submit.prevent="handleLogin">
+          <el-form-item prop="username">
             <el-input
-              :key="passwordType"
-              ref="password"
-              v-model="loginForm.password"
-              :type="passwordType"
-              placeholder="请输入密码（至少 6 位）"
-              name="password"
-              tabindex="2"
+              ref="username"
+              v-model="loginForm.username"
+              size="large"
+              placeholder="请输入用户名"
+              name="username"
+              type="text"
+              tabindex="1"
               autocomplete="on"
-              show-password
-              prefix-icon="el-icon-lock"
-              @keyup.native="checkCapslock"
-              @blur="capsTooltip = false"
-              @keyup.enter.native="handleLogin"
+              prefix-icon="User"
             />
           </el-form-item>
-        </el-tooltip>
-        <div class="login-actions">
-          <span class="link-forget" @click="changePass">忘记密码</span>
-          <el-button :loading="loading" type="primary" class="login-btn" @click.native.prevent="handleLogin">登 录</el-button>
-        </div>
-      </el-form>
-    </div>
+          <el-tooltip v-model:visible="capsTooltip" content="Caps Lock 已打开" placement="top" manual>
+            <el-form-item prop="password">
+              <el-input
+                :key="passwordType"
+                ref="password"
+                v-model="loginForm.password"
+                size="large"
+                :type="passwordType"
+                placeholder="请输入密码（至少 6 位）"
+                name="password"
+                tabindex="2"
+                autocomplete="on"
+                show-password
+                prefix-icon="Lock"
+                @keyup="checkCapslock"
+                @blur="capsTooltip = false"
+                @keyup.enter="handleLogin"
+              />
+            </el-form-item>
+          </el-tooltip>
+          <el-form-item v-if="mfaRequired" prop="otp">
+            <el-input
+              ref="otp"
+              v-model.trim="loginForm.otp"
+              size="large"
+              maxlength="6"
+              placeholder="请输入 6 位动态验证码"
+              name="otp"
+              tabindex="3"
+              prefix-icon="Key"
+              @keyup.enter="handleLogin"
+            />
+          </el-form-item>
+          <div class="login-actions">
+            <span class="link-forget" @click="changePass">忘记密码？</span>
+            <el-button :loading="loading" type="primary" size="large" class="login-btn" @click.prevent="handleLogin">登 录</el-button>
+          </div>
+        </el-form>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -62,16 +98,18 @@ export default {
       }
     }
     return {
+      mfaRequired: false,
       loginForm: {
         username: '',
-        password: ''
+        password: '',
+        otp: ''
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur' }],
         password: [{ required: true, trigger: 'blur', validator: validatePassword }]
       },
       passwordType: 'password',
-      publicKey: process.env.VUE_APP_PUBLIC_KEY || '',
+      publicKey: import.meta.env.VITE_APP_PUBLIC_KEY || '',
       capsTooltip: false,
       loading: false,
       publicKeyLoading: true,
@@ -153,14 +191,25 @@ export default {
             this.$message.error('密码加密失败，请刷新页面重试')
             return
           }
-          const encLoginForm = { username: this.loginForm.username, password: encPassword }
+          const encLoginForm = { username: this.loginForm.username, password: encPassword, otp: this.loginForm.otp }
           this.$store.dispatch('user/login', encLoginForm)
             .then(() => {
               this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
               this.loading = false
             })
-            .catch(() => {
+            .catch((error) => {
               this.loading = false
+              const msg = (error && error.response && error.response.data && (error.response.data.msg || error.response.data.message)) || (error && error.message) || ''
+              if (msg.indexOf('动态验证码') !== -1) {
+                const firstPrompt = !this.mfaRequired
+                this.mfaRequired = true
+                this.$nextTick(() => { this.$refs.otp && this.$refs.otp.focus() })
+                if (firstPrompt || !this.loginForm.otp) {
+                  this.$message.info('该账号已开启二次验证，请输入动态验证码')
+                } else {
+                  this.$message.error('动态验证码错误，请重试')
+                }
+              }
             })
         } else {
           return false
@@ -184,111 +233,144 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "~@/styles/variables.scss";
+@import "@/styles/variables.scss";
 
 .login-container {
   min-height: 100vh;
   width: 100%;
   display: flex;
+  background: $slate50;
+}
+
+/* 左侧品牌栏 */
+.login-brand {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 64px 56px;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(150deg, $themePrimaryDark 0%, $themePrimary 55%, $themePrimaryLight 130%);
+}
+.brand-deco {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  &--1 { width: 420px; height: 420px; top: -140px; right: -120px; }
+  &--2 { width: 280px; height: 280px; bottom: -100px; left: -80px; background: rgba(255, 255, 255, 0.06); }
+}
+.brand-inner { position: relative; max-width: 460px; }
+.brand-logo {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(4px);
+  margin-bottom: 28px;
+}
+.brand-title {
+  margin: 0 0 14px;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.brand-tagline {
+  margin: 0 0 40px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.85);
+}
+.brand-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.92);
+    .el-icon {
+      flex: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.18);
+      font-size: 13px;
+    }
+  }
+}
+.brand-footer {
   position: relative;
-  overflow: hidden;
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.login-bg {
-  position: absolute;
-  inset: 0;
-  /* 本地图：将图片放到 src/assets/backgd-image/ 后改为 url("~@/assets/backgd-image/你的图片.jpg") */
-  background: linear-gradient(145deg, #0f172a 0%, #1e293b 40%, #334155 100%);
-  background-image: url("https://images.unsplash.com/photo-1557683316-973673baf926?w=1920&q=80");
-  background-size: cover;
-  background-position: center;
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(160deg, rgba(15, 23, 42, 0.82) 0%, rgba(30, 41, 59, 0.78) 50%, rgba(51, 65, 81, 0.85) 100%);
-    pointer-events: none;
-  }
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse 80% 50% at 50% 120%, rgba(79, 70, 229, 0.15) 0%, transparent 50%);
-    pointer-events: none;
-  }
-}
-
-.login-card {
-  position: relative;
-  width: 420px;
-  max-width: calc(100vw - 32px);
-  padding: 52px 44px;
+/* 右侧表单 */
+.login-panel {
+  flex: 0 0 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
   background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
-
+.login-card {
+  width: 100%;
+  max-width: 360px;
+}
 .login-header {
-  text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 36px;
   .login-title {
     margin: 0 0 10px;
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 700;
-    color: #0f172a;
+    color: $slate900;
     letter-spacing: -0.02em;
   }
   .login-desc {
     margin: 0;
     font-size: 15px;
-    color: #64748b;
-    font-weight: 400;
+    color: $slate500;
   }
 }
-
 .login-form {
-  ::v-deep .el-form-item {
-    margin-bottom: 24px;
-  }
-  ::v-deep .el-input__inner {
-    height: 50px;
-    line-height: 50px;
-    border-radius: 12px;
-    border-color: #e2e8f0;
-    &:focus {
-      border-color: $themePrimary;
-    }
-  }
+  :deep(.el-form-item) { margin-bottom: 22px; }
+  :deep(.el-input__wrapper) { border-radius: 12px; }
 }
-
 .login-actions {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 18px;
-  margin-top: 32px;
+  gap: 16px;
+  margin-top: 28px;
   .link-forget {
-    text-align: right;
+    align-self: flex-end;
     font-size: 14px;
-    color: #64748b;
+    color: $slate500;
     cursor: pointer;
-    &:hover {
-      color: $themePrimary;
-    }
+    &:hover { color: $themePrimary; }
   }
   .login-btn {
-    height: 50px;
+    width: 100%;
+    height: 48px;
     font-size: 16px;
     font-weight: 600;
     border-radius: 12px;
-    background: $themePrimary;
-    border-color: $themePrimary;
-    &:hover, &:focus {
-      background: $themePrimaryDark;
-      border-color: $themePrimaryDark;
-    }
   }
+}
+
+/* 窄屏：隐藏品牌栏，表单铺满 */
+@media (max-width: 860px) {
+  .login-brand { display: none; }
+  .login-panel { flex: 1 1 auto; }
 }
 </style>

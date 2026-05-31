@@ -1,8 +1,8 @@
 <template>
   <el-card class="user-card">
-    <div slot="header" class="card-header">
+    <template #header><div class="card-header">
       <span>关于我</span>
-    </div>
+    </div></template>
 
     <div class="user-profile">
       <div class="box-center">
@@ -13,7 +13,7 @@
       </div>
       <div class="box-center">
         <div class="user-name text-center">{{ user.name }}</div>
-        <div class="user-role text-center text-muted">{{ user.role | uppercaseFirst }}</div>
+        <div class="user-role text-center text-muted">{{ uppercaseFirst(user.role) }}</div>
       </div>
     </div>
   </el-card>
@@ -21,6 +21,7 @@
 
 <script>
 import PanThumb from '@/components/PanThumb'
+import { uppercaseFirst } from '@/filters'
 
 export default {
   components: { PanThumb },
@@ -36,12 +37,15 @@ export default {
         }
       }
     }
+  },
+  methods: {
+    uppercaseFirst
   }
 }
 </script>
 
 <style lang="scss" scoped>
-@import "~@/styles/variables.scss";
+@import "@/styles/variables.scss";
 
 .user-card {
   margin-bottom: 20px;

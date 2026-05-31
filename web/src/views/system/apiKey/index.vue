@@ -1,28 +1,31 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <el-form size="mini" :inline="true" class="demo-form-inline">
-        <el-form-item>
-          <el-button :loading="loading" icon="el-icon-plus" type="primary" @click="openCreate">新建密钥</el-button>
-        </el-form-item>
-      </el-form>
+    <page-header title="API 密钥" subtitle="供第三方系统或脚本调用接口的访问密钥">
+      <template #actions>
+        <el-button type="primary" icon="Plus" @click="openCreate">新建密钥</el-button>
+      </template>
+    </page-header>
+
+    <el-card class="container-card" shadow="never">
 
       <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%">
         <el-table-column show-overflow-tooltip prop="name" label="名称" />
         <el-table-column show-overflow-tooltip prop="keyPrefix" label="密钥前缀" width="200">
-          <template slot-scope="scope">
+          <template #default="scope">
             <code>{{ scope.row.keyPrefix }}…</code>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180">
-          <template slot-scope="scope">
-            {{ scope.row.createdAt | formatTime }}
+          <template #default="scope">
+            {{ formatTime(scope.row.createdAt) }}
           </template>
         </el-table-column>
         <el-table-column fixed="right" label="操作" align="center" width="100">
-          <template slot-scope="scope">
-            <el-popconfirm title="删除后该密钥将立即失效，确定删除？" @onConfirm="doDelete(scope.row.id)">
-              <el-button slot="reference" size="mini" type="danger" icon="el-icon-delete">删除</el-button>
+          <template #default="scope">
+            <el-popconfirm title="删除后该密钥将立即失效，确定删除？" @confirm="doDelete(scope.row.id)">
+              <template #reference>
+                <el-button size="small" type="danger" icon="Delete">删除</el-button>
+              </template>
             </el-popconfirm>
           </template>
         </el-table-column>
@@ -41,30 +44,30 @@
       />
 
       <!-- 新建：输入名称 -->
-      <el-dialog title="新建 API 密钥" :visible.sync="createDialogVisible" width="500px">
+      <el-dialog title="新建 API 密钥" v-model="createDialogVisible" width="500px">
         <el-form ref="createForm" :model="createForm" :rules="createRules" label-width="名称">
           <el-form-item label="名称" prop="name">
             <el-input v-model.trim="createForm.name" placeholder="例如：第三方系统、脚本" maxlength="64" show-word-limit />
           </el-form-item>
         </el-form>
-        <span slot="footer" class="dialog-footer">
+        <template #footer><span class="dialog-footer">
           <el-button @click="createDialogVisible = false">取消</el-button>
           <el-button :loading="createLoading" type="primary" @click="submitCreate">确定</el-button>
-        </span>
+        </span></template>
       </el-dialog>
 
       <!-- 创建成功：仅此一次显示密钥 -->
-      <el-dialog title="请妥善保存密钥" :visible.sync="keyResultVisible" width="560px" :close-on-click-modal="false">
+      <el-dialog title="请妥善保存密钥" v-model="keyResultVisible" width="560px" :close-on-click-modal="false">
         <el-alert type="warning" :closable="false" show-icon style="margin-bottom: 12px;">
           <span>密钥仅显示一次，关闭后将无法再次查看，请复制保存后再关闭。</span>
         </el-alert>
         <el-input v-model="createdKey" type="textarea" :rows="3" readonly>
-          <template slot="prepend">X-API-Key</template>
+          <template #prepend>X-API-Key</template>
         </el-input>
-        <span slot="footer" class="dialog-footer">
+        <template #footer><span class="dialog-footer">
           <el-button type="primary" @click="copyKey">复制</el-button>
           <el-button @click="closeKeyResult">已保存，关闭</el-button>
-        </span>
+        </span></template>
       </el-dialog>
     </el-card>
   </div>
@@ -72,17 +75,12 @@
 
 <script>
 import { getApiKeyList, createApiKey, deleteApiKey } from '@/api/system/apiKey'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
+import PageHeader from '@/components/PageHeader/index.vue'
 
 export default {
   name: 'ApiKey',
-  filters: {
-    formatTime(val) {
-      if (!val) return '-'
-      const d = new Date(val)
-      return isNaN(d.getTime()) ? val : d.toLocaleString('zh-CN')
-    }
-  },
+  components: { PageHeader },
   data() {
     return {
       params: {
@@ -108,6 +106,11 @@ export default {
     this.fetchList()
   },
   methods: {
+    formatTime(val) {
+      if (!val) return '-'
+      const d = new Date(val)
+      return isNaN(d.getTime()) ? val : d.toLocaleString('zh-CN')
+    },
     async fetchList() {
       this.loading = true
       try {

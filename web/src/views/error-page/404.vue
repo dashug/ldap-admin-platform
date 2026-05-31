@@ -16,7 +16,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "~@/styles/variables.scss";
+@import "@/styles/variables.scss";
 
 .err-page {
   min-height: calc(100vh - 56px);

@@ -170,16 +170,23 @@ func initLDAPConn() (*ldap.Conn, error) {
 
 // ProbeLDAPConnection 使用当前配置探测 LDAP 是否可连接（不依赖全局连接池）
 func ProbeLDAPConnection() (connected bool, message string) {
-	if config.Conf.Ldap.Url == "" {
+	if config.Conf.Ldap == nil {
+		return false, "未配置 LDAP"
+	}
+	return ProbeLDAPConnectionWith(config.Conf.Ldap.Url, config.Conf.Ldap.AdminDN, config.Conf.Ldap.AdminPass)
+}
+
+// ProbeLDAPConnectionWith 使用指定参数探测 LDAP 是否可连接（用于「保存前测试」，不读取/修改全局配置）
+func ProbeLDAPConnectionWith(url, adminDN, adminPass string) (connected bool, message string) {
+	if url == "" {
 		return false, "未配置 LDAP 地址"
 	}
-	conn, err := ldap.DialURL(config.Conf.Ldap.Url, ldap.DialWithDialer(&net.Dialer{Timeout: 5 * time.Second}))
+	conn, err := ldap.DialURL(url, ldap.DialWithDialer(&net.Dialer{Timeout: 5 * time.Second}))
 	if err != nil {
 		return false, "连接失败: " + err.Error()
 	}
 	defer conn.Close()
-	err = conn.Bind(config.Conf.Ldap.AdminDN, config.Conf.Ldap.AdminPass)
-	if err != nil {
+	if err = conn.Bind(adminDN, adminPass); err != nil {
 		return false, "绑定失败: " + err.Error()
 	}
 	return true, "连接正常"

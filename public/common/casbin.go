@@ -9,7 +9,9 @@ import (
 )
 
 // 全局CasbinEnforcer
-var CasbinEnforcer *casbin.Enforcer
+// 使用 SyncedEnforcer：其 Enforce/策略增删等操作内部已用读写锁保证并发安全，
+// 因此鉴权中间件无需再用全局互斥锁串行化请求，提升并发吞吐。
+var CasbinEnforcer *casbin.SyncedEnforcer
 
 // 初始化casbin策略管理器
 func InitCasbinEnforcer() {
@@ -40,7 +42,7 @@ e = some(where (p.eft == allow))
 m = r.sub == p.sub && (keyMatch2(r.obj, p.obj) || keyMatch(r.obj, p.obj)) && (r.act == p.act || p.act == "*")
 `
 
-func mysqlCasbin() (*casbin.Enforcer, error) {
+func mysqlCasbin() (*casbin.SyncedEnforcer, error) {
 	a, err := gormadapter.NewAdapterByDB(DB)
 	if err != nil {
 		return nil, err
@@ -49,7 +51,7 @@ func mysqlCasbin() (*casbin.Enforcer, error) {
 	if err != nil {
 		return nil, err
 	}
-	e, err := casbin.NewEnforcer(m, a)
+	e, err := casbin.NewSyncedEnforcer(m, a)
 	if err != nil {
 		return nil, err
 	}

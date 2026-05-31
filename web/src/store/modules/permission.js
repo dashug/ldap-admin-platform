@@ -1,6 +1,9 @@
 import { constantRoutes } from '@/router'
 import { getUserMenuTreeByUserId } from '@/api/system/menu'
-import Layout from '@/layout'
+import Layout from '@/layout/index.vue'
+
+// Vite：预收集所有视图组件，供按服务端菜单动态映射
+const viewModules = import.meta.glob('../../views/**/*.vue')
 
 // 菜单名称展示映射（与后端菜单标题一致，未更新 DB 时侧边栏也显示新名）
 const menuTitleMap = {
@@ -41,8 +44,9 @@ export const loadComponent = (component) => {
     // 组件不存在使用默认布局
     return Layout
   }
-  // 动态获取组件
-  return (resolve) => require([`@/views${component}`], resolve)
+  // 服务端 component 形如 '/system/role/index'，映射到 ../../views/system/role/index.vue
+  const key = `../../views${component}.vue`
+  return viewModules[key]
 }
 
 const state = {

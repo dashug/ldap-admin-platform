@@ -1,69 +1,45 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
-        <el-form-item label="名称">
-          <el-input v-model.trim="params.groupName" style="width: 100px;" clearable placeholder="名称" @keyup.enter.native="search" @clear="search" />
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model.trim="params.remark" style="width: 100px;" clearable placeholder="描述" @keyup.enter.native="search" @clear="search" />
-        </el-form-item>
-        <el-form-item label="同步状态">
-          <el-select v-model.trim="params.syncState" style="width: 110px;" clearable placeholder="同步状态" @change="search" @clear="search">
-            <el-option label="已同步" value="1" />
-            <el-option label="未同步" value="2" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
-        </el-form-item>
-        <!-- <el-form-item>
-          <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="resetData">重置</el-button>
-        </el-form-item> -->
-        <el-form-item>
-          <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-delete" type="danger" @click="batchDelete">批量删除</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-upload2" type="success" @click="batchSync">批量同步</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="previewLoading" icon="el-icon-view" type="info" plain @click="syncPreview">同步预览</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button icon="el-icon-setting" type="primary" plain @click="$router.push('/personnel/user')">目录快速配置</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-dropdown trigger="click" @command="handleGroupColumnCommand">
-            <el-button type="default" plain size="mini" icon="el-icon-s-operation">列设置</el-button>
-            <el-dropdown-menu slot="dropdown" class="column-setting-dropdown">
-              <el-dropdown-item command="reset"><i class="el-icon-refresh-left" /> 重置为默认</el-dropdown-item>
-              <el-dropdown-item divided disabled>显示列</el-dropdown-item>
-              <el-dropdown-item v-for="col in defaultGroupColumns" :key="col.prop" :command="col.prop">
-                <el-checkbox :value="columnConfig.visible[col.prop]" @click.native.prevent>{{ col.label }}</el-checkbox>
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
-        </el-form-item>
-        <el-form-item>
-          <el-tag size="small" type="info">目录类型：{{ directoryTypeText }}</el-tag>
-        </el-form-item>
-        <br>
-        <el-form-item v-if="syncConfig.ldapEnableSync">
-          <el-button :loading="loading" icon="el-icon-download" type="warning" @click="syncOpenLdapDepts">同步原ldap部门</el-button>
-        </el-form-item>
-        <el-form-item v-if="syncConfig.dingTalkEnableSync">
-          <el-button :loading="loading" icon="el-icon-download" type="warning" @click="syncDingTalkDepts">同步钉钉部门</el-button>
-        </el-form-item>
-        <el-form-item v-if="syncConfig.feiShuEnableSync">
-          <el-button :loading="loading" icon="el-icon-download" type="warning" @click="syncFeiShuDepts">同步飞书部门</el-button>
-        </el-form-item>
-        <el-form-item v-if="syncConfig.weComEnableSync">
-          <el-button :loading="loading" icon="el-icon-download" type="warning" @click="syncWeComDepts">同步企业微信部门</el-button>
-        </el-form-item>
-      </el-form>
+    <page-header title="部门管理" subtitle="管理组织部门（OU / 组）与第三方同步">
+      <template #actions>
+        <el-tag type="info" effect="plain" size="small">目录：{{ directoryTypeText }}</el-tag>
+        <el-button type="primary" icon="Plus" @click="create">新建部门</el-button>
+      </template>
+    </page-header>
+
+    <el-card class="container-card" shadow="never">
+      <div class="filter-bar">
+        <el-input v-model.trim="params.groupName" prefix-icon="Search" clearable placeholder="搜索名称" style="width: 180px;" @keyup.enter="search" @clear="search" />
+        <el-input v-model.trim="params.remark" clearable placeholder="描述" style="width: 130px;" @keyup.enter="search" @clear="search" />
+        <el-select v-model.trim="params.syncState" clearable placeholder="同步状态" style="width: 120px;" @change="search" @clear="search">
+          <el-option label="已同步" value="1" />
+          <el-option label="未同步" value="2" />
+        </el-select>
+        <el-button :loading="loading" icon="Search" @click="search">查询</el-button>
+        <div class="filter-bar__spacer" />
+        <el-button :disabled="multipleSelection.length === 0" :loading="loading" plain type="danger" icon="Delete" @click="batchDelete">批量删除</el-button>
+        <el-dropdown trigger="click" @command="handleGroupMoreCommand">
+          <el-button plain>更多操作<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+          <template #dropdown><el-dropdown-menu>
+            <el-dropdown-item command="batchSync" :disabled="multipleSelection.length === 0" icon="Upload">批量同步</el-dropdown-item>
+            <el-dropdown-item command="syncPreview" :disabled="multipleSelection.length === 0" icon="View">同步预览</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.ldapEnableSync" divided command="syncLdap" icon="Download">同步原 LDAP 部门</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.dingTalkEnableSync" command="syncDing" icon="Download">同步钉钉部门</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.feiShuEnableSync" command="syncFeishu" icon="Download">同步飞书部门</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.weComEnableSync" command="syncWecom" icon="Download">同步企微部门</el-dropdown-item>
+          </el-dropdown-menu></template>
+        </el-dropdown>
+        <el-dropdown trigger="click" @command="handleGroupColumnCommand">
+          <el-button plain icon="Operation">列设置</el-button>
+          <template #dropdown><el-dropdown-menu class="column-setting-dropdown">
+            <el-dropdown-item command="reset"><i class="el-icon-refresh-left" /> 重置为默认</el-dropdown-item>
+            <el-dropdown-item divided disabled>显示列</el-dropdown-item>
+            <el-dropdown-item v-for="col in defaultGroupColumns" :key="col.prop" :command="col.prop">
+              <el-checkbox :value="columnConfig.visible[col.prop]" @click.prevent>{{ col.label }}</el-checkbox>
+            </el-dropdown-item>
+          </el-dropdown-menu></template>
+        </el-dropdown>
+      </div>
 
       <el-table v-loading="loading" :default-expand-all="true" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" row-key="ID" :data="infoTableData" border stripe style="width: 100%" @selection-change="handleSelectionChange" @header-dragend="handleGroupTableHeaderDragend">
         <el-table-column type="selection" width="55" align="center" />
@@ -80,26 +56,26 @@
         <el-table-column fixed="right" label="操作" align="center" width="220">
           <template #default="scope">
             <el-tooltip v-if="scope.row.groupType != 'ou' && scope.row.groupName != 'root'" content="添加" effect="dark" placement="top">
-              <el-button size="mini" icon="el-icon-setting" circle type="info" @click="addUp(scope.row)" />
+              <el-button size="small" icon="Setting" circle type="info" @click="addUp(scope.row)" />
             </el-tooltip>
             <el-tooltip content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="el-icon-edit" circle type="primary" @click="update(scope.row)" />
+              <el-button size="small" icon="Edit" circle type="primary" @click="update(scope.row)" />
             </el-tooltip>
             <el-tooltip class="delete-popover" content="删除" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @onConfirm="singleDelete(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
+              <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
+                <template #reference><el-button size="small" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
             <el-tooltip v-if="scope.row.syncState === 2" class="delete-popover" content="同步" effect="dark" placement="top">
-              <el-popconfirm title="确定同步吗？" @onConfirm="singleSync(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-upload2" circle type="success" />
+              <el-popconfirm title="确定同步吗？" @confirm="singleSync(scope.row.ID)">
+                <template #reference><el-button size="small" icon="Upload" circle type="success"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
       <!-- 新增 -->
-      <el-dialog :title="dialogFormTitle" :visible.sync="updateLoading">
+      <el-dialog :title="dialogFormTitle" v-model="updateLoading">
         <el-form ref="dialogForm" size="small" :model="dialogFormData" :rules="dialogFormRules" label-width="120px">
           <el-form-item label="名称" prop="groupName">
             <el-input v-model.trim="dialogFormData.groupName" placeholder="名称(拼音)" />
@@ -111,25 +87,29 @@
             </el-select>
           </el-form-item>
           <el-form-item label="上级分组" prop="parentId">
-            <treeselect
+            <el-tree-select
               v-model="dialogFormData.parentId"
-              :options="treeselectData"
-              :normalizer="normalizer"
+              :data="treeselectData"
+              :props="{ value: 'ID', label: 'groupName', children: 'children' }"
+              node-key="ID"
+              check-strictly
+              :render-after-expand="false"
+              style="width:100%"
               placeholder="请选择上级分组"
-              @input="treeselectInput"
+              @change="treeselectInput"
             />
           </el-form-item>
           <el-form-item label="描述" prop="remark">
             <el-input v-model.trim="dialogFormData.remark" type="textarea" placeholder="描述" :autosize="{minRows: 3, maxRows: 6}" show-word-limit maxlength="100" />
           </el-form-item>
         </el-form>
-        <div slot="footer" class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
-          <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
-        </div>
+        <template #footer><div class="dialog-footer">
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
+          <el-button size="small" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
+        </div></template>
       </el-dialog>
       <!-- 同步预览（Dry Run）结果 -->
-      <el-dialog title="同步预览" :visible.sync="previewDialogVisible" width="520px" append-to-body @close="previewResult = null">
+      <el-dialog title="同步预览" v-model="previewDialogVisible" width="520px" append-to-body @close="previewResult = null">
         <div v-if="previewResult" class="sync-preview-body">
           <el-descriptions :column="1" border size="small">
             <el-descriptions-item label="将新增到 LDAP">{{ previewResult.addCount }} 个部门</el-descriptions-item>
@@ -141,14 +121,14 @@
           </template>
           <p class="preview-tip">以上为预览结果，未执行实际同步。点击「执行同步」将正式同步到 LDAP。</p>
         </div>
-        <div slot="footer" class="dialog-footer">
+        <template #footer><div class="dialog-footer">
           <el-button size="small" @click="previewDialogVisible = false">关 闭</el-button>
           <el-button size="small" type="success" :disabled="!previewResult || (previewResult.addCount === 0 && previewResult.updateCount === 0)" @click="confirmSyncFromPreview">执行同步</el-button>
-        </div>
+        </div></template>
       </el-dialog>
 
       <!-- 编辑 -->
-      <el-dialog :title="dialogFormTitle" :visible.sync="dialogFormVisible">
+      <el-dialog :title="dialogFormTitle" v-model="dialogFormVisible">
         <el-form ref="dialogForm" size="small" :model="dialogFormData" :rules="dialogFormRules" label-width="120px">
           <el-form-item label="名称" prop="groupName">
             <el-input v-model.trim="dialogFormData.groupName" :disabled="true" placeholder="名称" />
@@ -157,39 +137,25 @@
             <el-input v-model.trim="dialogFormData.remark" type="textarea" placeholder="描述" :autosize="{minRows: 3, maxRows: 6}" show-word-limit maxlength="100" />
           </el-form-item>
         </el-form>
-        <div slot="footer" class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
-          <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
-        </div>
+        <template #footer><div class="dialog-footer">
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
+          <el-button size="small" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
+        </div></template>
       </el-dialog>
     </el-card>
   </div>
 </template>
 
 <script>
-import Treeselect from '@riophae/vue-treeselect'
-import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import { getGroupTree, groupAdd, groupUpdate, groupDel, syncDingTalkDeptsApi, syncWeComDeptsApi, syncFeiShuDeptsApi, syncOpenLdapDeptsApi, syncSqlGroups, syncSqlGroupsPreview } from '@/api/personnel/group'
 import { getConfig } from '@/api/system/base'
 import { loadTableColumnConfig, saveTableColumnConfig, defaultGroupColumns, STORAGE_KEY_GROUP_TABLE } from '@/utils/tableColumnSettings'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
+import PageHeader from '@/components/PageHeader/index.vue'
 
 export default {
   name: 'Group',
-  components: {
-    Treeselect
-  },
-  filters: {
-    methodTagFilter(val) {
-      if (val === 'GET') {
-        return ''
-      } else if (val === 'POST') {
-        return 'success'
-      } else {
-        return 'info'
-      }
-    }
-  },
+  components: { PageHeader },
   data() {
     return {
       // 查询参数
@@ -259,9 +225,6 @@ export default {
         groupId: '',
         nickname: ''
       },
-      renderFunc(h, option) {
-        return <span>{option.key} - {option.label}</span>
-      },
       userArrInfo: [], // 初始人员列表数据
       data: [], // 转化后人员列表数据
       value3: [], // 右侧默认人员列表数据
@@ -326,15 +289,15 @@ export default {
       this.columnConfig.visible = {}
       this.columnConfig.widths = {}
       defaultGroupColumns.forEach(c => {
-        this.$set(this.columnConfig.visible, c.prop, c.visible !== false)
-        if (c.width) this.$set(this.columnConfig.widths, c.prop, c.width)
+        this.columnConfig.visible[c.prop] = c.visible !== false
+        if (c.width) this.columnConfig.widths[c.prop] = c.width
       })
       saveTableColumnConfig(STORAGE_KEY_GROUP_TABLE, this.columnConfig)
       Message.success('已重置为默认列')
     },
     handleGroupTableHeaderDragend(newWidth, oldWidth, column) {
       if (column && column.property) {
-        this.$set(this.columnConfig.widths, column.property, newWidth)
+        this.columnConfig.widths[column.property] = newWidth
         saveTableColumnConfig(STORAGE_KEY_GROUP_TABLE, this.columnConfig)
       }
     },
@@ -593,12 +556,13 @@ export default {
       this.getTableData()
     },
     // treeselect
-    normalizer(node) {
-      return {
-        id: node.ID,
-        label: node.groupName,
-        children: node.children
-      }
+    handleGroupMoreCommand(cmd) {
+      if (cmd === 'batchSync') this.batchSync()
+      else if (cmd === 'syncPreview') this.syncPreview()
+      else if (cmd === 'syncLdap') this.syncOpenLdapDepts()
+      else if (cmd === 'syncDing') this.syncDingTalkDepts()
+      else if (cmd === 'syncFeishu') this.syncFeiShuDepts()
+      else if (cmd === 'syncWecom') this.syncWeComDepts()
     },
     treeselectInput(value) {
       this.treeselectValue = value

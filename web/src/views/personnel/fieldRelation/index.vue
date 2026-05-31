@@ -1,51 +1,25 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <div class="page-tip">
-        <p>同步钉钉/企微/飞书用户或分组时，用此处配置「第三方字段名 → 本系统属性」的对应关系；若同步规则中选择了「按字段关联」生成用户名，会按本页配置取值。</p>
+    <page-header title="同步字段映射" subtitle="配置「第三方字段名 → 本系统属性」的对应关系">
+      <template #actions>
+        <el-button type="primary" icon="Plus" @click="create">新建映射</el-button>
+      </template>
+    </page-header>
+
+    <el-card class="container-card" shadow="never">
+      <el-alert
+        type="info"
+        :closable="false"
+        show-icon
+        title="同步钉钉/企微/飞书用户或分组时，用此处配置字段对应关系；若同步规则选择「按字段关联」生成用户名，会按本页配置取值。"
+        style="margin-bottom: 16px;"
+      />
+      <div class="filter-bar">
+        <el-input v-model.trim="params.flag" prefix-icon="Search" clearable placeholder="搜索字段标识（如 feishu_user）" style="width: 280px;" @keyup.enter="search" @clear="search" />
+        <el-button :loading="loading" icon="Search" @click="search">查询</el-button>
+        <div class="filter-bar__spacer" />
+        <el-button :disabled="multipleSelection.length === 0" :loading="loading" plain type="danger" icon="Delete" @click="batchDelete">批量删除</el-button>
       </div>
-      <el-form
-        size="mini"
-        :inline="true"
-        :model="params"
-        class="demo-form-inline"
-      >
-        <el-form-item label="字段标识">
-          <el-input
-            v-model.trim="params.flag"
-            clearable
-            placeholder="如 feishu_user、dingtalk_group"
-            @keyup.enter.native="search"
-            @clear="search"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button
-            :loading="loading"
-            icon="el-icon-search"
-            type="primary"
-            @click="search"
-          >查询</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button
-            :loading="loading"
-            icon="el-icon-plus"
-            type="warning"
-            @click="create"
-          >新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button
-            :disabled="multipleSelection.length === 0"
-            :loading="loading"
-            icon="el-icon-delete"
-            type="danger"
-            @click="batchDelete"
-          >批量删除</el-button>
-        </el-form-item>
-        <br>
-      </el-form>
 
       <el-table
         v-loading="loading"
@@ -79,7 +53,7 @@
           label="字段标识"
         />
         <el-table-column show-overflow-tooltip sortable label="字段属性">
-          <template slot-scope="props">
+          <template #default="props">
             <el-form>
               <el-form-item>
                 <span>{{ props.row.Attributes }}</span>
@@ -91,8 +65,8 @@
           <template #default="scope">
             <el-tooltip content="编辑" effect="dark" placement="top">
               <el-button
-                size="mini"
-                icon="el-icon-edit"
+                size="small"
+                icon="Edit"
                 circle
                 type="primary"
                 @click="update(scope.row)"
@@ -106,15 +80,14 @@
             >
               <el-popconfirm
                 title="确定删除吗？"
-                @onConfirm="singleDelete(scope.row.ID)"
+                @confirm="singleDelete(scope.row.ID)"
               >
-                <el-button
-                  slot="reference"
-                  size="mini"
-                  icon="el-icon-delete"
+                <template #reference><el-button
+                  size="small"
+                  icon="Delete"
                   circle
                   type="danger"
-                />
+                 /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
@@ -122,7 +95,7 @@
       </el-table>
 
       <!-- 新增 -->
-      <el-dialog :title="dialogFormTitle" :visible.sync="updateLoading">
+      <el-dialog :title="dialogFormTitle" v-model="updateLoading">
         <div class="components-container">
           <aside>动态关系管理说明文档参考： <a href="https://example.com/docs/field-relation" target="_blank">动态字段关系管理</a></aside>
         </div>
@@ -282,19 +255,19 @@
             </el-form-item>
           </template>
         </el-form>
-        <div slot="footer" class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
+        <template #footer><div class="dialog-footer">
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
           <el-button
-            size="mini"
+            size="small"
             :loading="submitLoading"
             type="primary"
             @click="submitForm('A')"
           >确 定</el-button>
-        </div>
+        </div></template>
       </el-dialog>
 
       <!-- 编辑 -->
-      <el-dialog :title="dialogFormTitle" :visible.sync="dialogFormVisible">
+      <el-dialog :title="dialogFormTitle" v-model="dialogFormVisible">
         <div class="components-container">
           <aside>动态关系管理说明文档参考： <a href="https://example.com/docs/field-relation" target="_blank">动态字段关系管理</a></aside>
         </div>
@@ -437,15 +410,15 @@
             </el-form-item>
           </template>
         </el-form>
-        <div slot="footer" class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
+        <template #footer><div class="dialog-footer">
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
           <el-button
-            size="mini"
+            size="small"
             :loading="submitLoading"
             type="primary"
             @click="submitForm('B')"
           >确 定</el-button>
-        </div>
+        </div></template>
       </el-dialog>
     </el-card>
   </div>
@@ -460,13 +433,14 @@ import {
   relationUp,
   relationDel
 } from '@/api/personnel/fieldRelation'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
+import PageHeader from '@/components/PageHeader/index.vue'
 
 const cityOptions = ['用户字段动态关联', '分组字段动态关联']
 export default {
   name: 'FieldRelation',
   components: {
-    // Treeselect
+    PageHeader
   },
   filters: {
     methodTagFilter(val) {

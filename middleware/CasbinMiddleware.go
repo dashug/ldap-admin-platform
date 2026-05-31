@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"strings"
-	"sync"
 
 	"github.com/dashug/ldap-admin-platform/config"
 	"github.com/dashug/ldap-admin-platform/public/common"
@@ -11,8 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
-
-var checkLock sync.Mutex
 
 // Casbin中间件, 基于RBAC的权限访问控制模型
 func CasbinMiddleware() gin.HandlerFunc {
@@ -53,9 +50,7 @@ func CasbinMiddleware() gin.HandlerFunc {
 }
 
 func check(subs []string, obj string, act string) bool {
-	// 同一时间只允许一个请求执行校验, 否则可能会校验失败
-	checkLock.Lock()
-	defer checkLock.Unlock()
+	// SyncedEnforcer.Enforce 内部已加读写锁，并发安全，无需再额外串行化
 	isPass := false
 	for _, sub := range subs {
 		pass, _ := common.CasbinEnforcer.Enforce(sub, obj, act)

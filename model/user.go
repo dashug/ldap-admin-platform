@@ -31,6 +31,8 @@ type User struct {
 	UserDN        string     `gorm:"type:varchar(255);not null;comment:'用户dn'" json:"userDn"`                           // 用户在ldap的dn
 	SyncState     uint       `gorm:"type:tinyint(1);default:1;comment:'同步状态:1已同步, 2未同步'" json:"syncState"`              // 数据到ldap的同步状态
 	ExpireAt      *time.Time `gorm:"comment:'账户过期日，过期后自动禁用'" json:"expireAt"`                                    // 账户过期日（可选）
+	OtpSecret     string     `gorm:"type:varchar(64);comment:'TOTP密钥'" json:"-"`                                        // MFA 的 TOTP 密钥，不对外序列化
+	MfaEnabled    bool       `gorm:"comment:'是否启用MFA二次验证'" json:"mfaEnabled"`                                           // 是否已启用 MFA
 }
 
 func (u *User) SetUserName(userName string) {

@@ -312,13 +312,6 @@ func (s UserService) GetCurrentLoginUser(c *gin.Context) (model.User, error) {
 func (s UserService) Login(user *model.User) (*model.User, error) {
 	// 根据用户名获取用户(正常状态:用户状态正常)
 	var firstUser model.User
-	// err := common.DB.
-	// 	Where("username = ?", user.Username).
-	// 	Preload("Roles").
-	// 	First(&firstUser).Error
-	// if err != nil {
-	// 	return nil, errors.New("用户不存在")
-	// }
 	err := s.Find(tools.H{"username": user.Username}, &firstUser)
 	if err != nil {
 		return nil, errors.New("用户不存在")
@@ -329,22 +322,8 @@ func (s UserService) Login(user *model.User) (*model.User, error) {
 		return nil, errors.New("用户被禁用")
 	}
 
-	// 判断用户拥有的所有角色的状态,全部角色都被禁用则不能登录
-	// roles := firstUser.Roles
-	// isValidate := false
-	// for _, role := range roles {
-	// 	// 有一个正常状态的角色就可以登录
-	// 	if role.Status == 1 {
-	// 		isValidate = true
-	// 		break
-	// 	}
-	// }
-
-	// if !isValidate {
-	// 	return nil, errors.New("用户角色被禁用")
-	// }
-
-	if tools.NewParPasswd(firstUser.Password) != user.Password {
+	// 兼容两种存储：本地账号 bcrypt 哈希，LDAP 同步用户为 RSA 可逆密文
+	if !tools.VerifyPassword(firstUser.Password, user.Password) {
 		return nil, errors.New("密码错误")
 	}
 

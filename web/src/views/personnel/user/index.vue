@@ -1,82 +1,55 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <!-- 筛选与常用操作 -->
-      <div class="toolbar-section">
-        <el-form size="mini" :inline="true" :model="params" class="toolbar-form">
-          <el-form-item label="用户名">
-            <el-input v-model.trim="params.username" style="width: 110px;" clearable placeholder="用户名" @keyup.enter.native="search" @clear="search" />
-          </el-form-item>
-          <el-form-item label="昵称">
-            <el-input v-model.trim="params.nickname" style="width: 110px;" clearable placeholder="昵称" @keyup.enter.native="search" @clear="search" />
-          </el-form-item>
-          <el-form-item label="状态">
-            <el-select v-model.trim="params.status" style="width: 100px;" clearable placeholder="状态" @change="search" @clear="search">
-              <el-option label="正常" value="1" />
-              <el-option label="禁用" value="2" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="同步状态">
-            <el-select v-model.trim="params.syncState" style="width: 100px;" clearable placeholder="同步状态" @change="search" @clear="search">
-              <el-option label="已同步" value="1" />
-              <el-option label="未同步" value="2" />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-delete" type="danger" @click="batchDelete">批量删除</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-upload2" type="success" @click="batchSync">批量同步</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button :disabled="multipleSelection.length === 0" :loading="previewLoading" icon="el-icon-view" type="info" plain @click="syncPreview">同步预览</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button :loading="exportLoading" icon="el-icon-download" type="primary" plain @click="exportUserList">导出 Excel</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-dropdown trigger="click" @command="handleColumnCommand">
-              <el-button type="default" plain size="mini" icon="el-icon-s-operation">列设置</el-button>
-              <el-dropdown-menu slot="dropdown" class="column-setting-dropdown">
-                <el-dropdown-item command="reset"><i class="el-icon-refresh-left" /> 重置为默认</el-dropdown-item>
-                <el-dropdown-item divided disabled>显示列（勾选即显示）</el-dropdown-item>
-                <el-dropdown-item v-for="col in defaultUserColumns" :key="col.prop" :command="col.prop">
-                  <el-checkbox :value="columnConfig.visible[col.prop]" @click.native.prevent>{{ col.label }}</el-checkbox>
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </el-dropdown>
-          </el-form-item>
-        </el-form>
-      </div>
-      <!-- 配置与同步来源 -->
-      <div class="toolbar-section toolbar-section--secondary">
-        <span class="toolbar-label">配置</span>
-        <el-button :loading="loading" icon="el-icon-setting" type="primary" plain size="mini" @click="openDirectoryConfig">目录配置</el-button>
-        <el-button :loading="loading" icon="el-icon-connection" type="success" plain size="mini" @click="openThirdPartyConfig">平台对接</el-button>
-        <el-button :loading="loading" icon="el-icon-message" type="info" plain size="mini" @click="$refs.notificationSettings.open()">通知设置</el-button>
-        <el-tag size="small" type="info" class="toolbar-tag">目录：{{ directoryTypeText }}</el-tag>
-        <span class="toolbar-label toolbar-label--sync">同步来源</span>
-        <template v-if="syncConfig.ldapEnableSync">
-          <el-button :loading="loading" icon="el-icon-download" type="warning" size="mini" @click="syncOpenLdapUsers">原 LDAP</el-button>
-        </template>
-        <template v-if="syncConfig.dingTalkEnableSync">
-          <el-button :loading="loading" icon="el-icon-download" type="warning" size="mini" @click="syncDingTalkUsers">钉钉</el-button>
-        </template>
-        <template v-if="syncConfig.feiShuEnableSync">
-          <el-button :loading="loading" icon="el-icon-download" type="warning" size="mini" @click="syncFeiShuUsers">飞书</el-button>
-        </template>
-        <template v-if="syncConfig.weComEnableSync">
-          <el-button :loading="loading" icon="el-icon-download" type="warning" size="mini" @click="syncWeComUsers">企微</el-button>
-        </template>
+    <page-header title="用户管理" subtitle="管理目录用户、账号状态与第三方同步">
+      <template #actions>
+        <el-tag type="info" effect="plain" size="small">目录：{{ directoryTypeText }}</el-tag>
+        <el-button type="primary" icon="Plus" @click="create">新建用户</el-button>
+      </template>
+    </page-header>
+
+    <el-card class="container-card" shadow="never">
+      <!-- 筛选栏 -->
+      <div class="filter-bar">
+        <el-input v-model.trim="params.username" prefix-icon="Search" placeholder="搜索用户名" clearable style="width: 200px;" @keyup.enter="search" @clear="search" />
+        <el-input v-model.trim="params.nickname" placeholder="昵称" clearable style="width: 130px;" @keyup.enter="search" @clear="search" />
+        <el-select v-model.trim="params.status" placeholder="状态" clearable style="width: 110px;" @change="search" @clear="search">
+          <el-option label="正常" value="1" />
+          <el-option label="禁用" value="2" />
+        </el-select>
+        <el-select v-model.trim="params.syncState" placeholder="同步状态" clearable style="width: 120px;" @change="search" @clear="search">
+          <el-option label="已同步" value="1" />
+          <el-option label="未同步" value="2" />
+        </el-select>
+        <el-button :loading="loading" icon="Search" @click="search">查询</el-button>
+        <div class="filter-bar__spacer" />
+        <el-button :disabled="multipleSelection.length === 0" :loading="loading" plain type="danger" icon="Delete" @click="batchDelete">批量删除</el-button>
+        <el-dropdown trigger="click" @command="handleMoreCommand">
+          <el-button plain>更多操作<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+          <template #dropdown><el-dropdown-menu>
+            <el-dropdown-item command="batchSync" :disabled="multipleSelection.length === 0" icon="Upload">批量同步</el-dropdown-item>
+            <el-dropdown-item command="syncPreview" :disabled="multipleSelection.length === 0" icon="View">同步预览</el-dropdown-item>
+            <el-dropdown-item command="batchImport" icon="Upload">批量导入</el-dropdown-item>
+            <el-dropdown-item command="export" icon="Download">导出 Excel</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.ldapEnableSync" divided command="syncLdap" icon="Download">从原 LDAP 同步</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.dingTalkEnableSync" command="syncDing" icon="Download">从钉钉同步</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.feiShuEnableSync" command="syncFeishu" icon="Download">从飞书同步</el-dropdown-item>
+            <el-dropdown-item v-if="syncConfig.weComEnableSync" command="syncWecom" icon="Download">从企微同步</el-dropdown-item>
+          </el-dropdown-menu></template>
+        </el-dropdown>
+        <el-dropdown trigger="click" @command="handleColumnCommand">
+          <el-button plain icon="Operation">列设置</el-button>
+          <template #dropdown><el-dropdown-menu class="column-setting-dropdown">
+            <el-dropdown-item command="reset"><i class="el-icon-refresh-left" /> 重置为默认</el-dropdown-item>
+            <el-dropdown-item divided disabled>显示列（勾选即显示）</el-dropdown-item>
+            <el-dropdown-item v-for="col in defaultUserColumns" :key="col.prop" :command="col.prop">
+              <el-checkbox :value="columnConfig.visible[col.prop]" @click.prevent>{{ col.label }}</el-checkbox>
+            </el-dropdown-item>
+          </el-dropdown-menu></template>
+        </el-dropdown>
       </div>
 
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange" @header-dragend="handleUserTableHeaderDragend">
+      <el-skeleton v-if="loading && tableData.length === 0" :rows="6" animated style="padding: 12px 4px;" />
+      <el-table v-else v-loading="loading" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange" @header-dragend="handleUserTableHeaderDragend">
         <el-table-column type="selection" width="55" align="center" />
         <template v-for="col in visibleUserColumns">
           <el-table-column
@@ -88,7 +61,7 @@
             :width="col.width || 70"
             :min-width="col.minWidth"
           >
-            <template slot-scope="scope">
+            <template #default="scope">
               <el-switch v-model="scope.row.status" :active-value="1" :inactive-value="2" @change="userStateChanged(scope.row)" />
             </template>
           </el-table-column>
@@ -104,23 +77,23 @@
           />
         </template>
         <el-table-column fixed="right" label="操作" align="center" width="190">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tooltip content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="el-icon-edit" circle type="primary" @click="update(scope.row)" />
+              <el-button size="small" icon="Edit" circle type="primary" @click="update(scope.row)" />
             </el-tooltip>
             <el-tooltip class="delete-popover" content="重置密码" effect="dark" placement="top">
-              <el-popconfirm title="确定重置该用户密码吗？" @onConfirm="openConfirmDialog('resetPassword', { username: scope.row.username }, '确认重置密码')">
-                <el-button slot="reference" size="mini" icon="el-icon-key" circle type="warning" />
+              <el-popconfirm title="确定重置该用户密码吗？" @confirm="openConfirmDialog('resetPassword', { username: scope.row.username }, '确认重置密码')">
+                <template #reference><el-button size="small" icon="Key" circle type="warning"  /></template>
               </el-popconfirm>
             </el-tooltip>
             <el-tooltip class="delete-popover" content="删除" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @onConfirm="openConfirmDialog('singleDelete', { id: scope.row.ID }, '确认删除')">
-                <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
+              <el-popconfirm title="确定删除吗？" @confirm="openConfirmDialog('singleDelete', { id: scope.row.ID }, '确认删除')">
+                <template #reference><el-button size="small" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
             <el-tooltip v-if="scope.row.syncState == 2" class="delete-popover" content="同步" effect="dark" placement="top">
-              <el-popconfirm title="确定同步吗？" @onConfirm="singleSync(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-upload2" circle type="success" />
+              <el-popconfirm title="确定同步吗？" @confirm="singleSync(scope.row.ID)">
+                <template #reference><el-button size="small" icon="Upload" circle type="success"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
@@ -140,7 +113,7 @@
         />
       </div>
 
-      <el-dialog :title="dialogFormTitle" :visible.sync="dialogFormVisible" width="50%">
+      <el-drawer :title="dialogFormTitle" v-model="dialogFormVisible" direction="rtl" size="600px" class="form-drawer">
         <el-form ref="dialogForm" size="small" :model="dialogFormData" :rules="dialogFormRules" label-width="80px">
           <el-row>
             <el-col :span="12">
@@ -209,17 +182,18 @@
             </el-col>
             <el-col :span="24">
               <el-form-item label="所属部门" prop="departmentId">
-                <treeselect
+                <el-tree-select
                   v-model="dialogFormData.departmentId"
-                  :options="departmentsOptions"
+                  :data="departmentsOptions"
+                  :props="treeSelectProps"
+                  node-key="ID"
+                  multiple
+                  show-checkbox
+                  check-strictly
+                  :render-after-expand="false"
                   placeholder="请选择部门"
-                  :normalizer="normalizer"
-                  value-consists-of="ALL"
-                  :multiple="true"
-                  :flat="true"
-                  no-children-text="没有更多选项"
-                  no-results-text="没有匹配的选项"
-                  @input="treeselectInput"
+                  style="width:100%"
+                  @change="treeselectInput"
                 />
               </el-form-item>
             </el-col>
@@ -240,16 +214,16 @@
             </el-col>
           </el-row>
         </el-form>
-        <div slot="footer" class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
-          <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
-        </div>
-      </el-dialog>
+        <template #footer><div class="drawer-footer">
+          <el-button @click="cancelForm()">取 消</el-button>
+          <el-button :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
+        </div></template>
+      </el-drawer>
 
       <!-- 重置密码结果对话框 -->
       <el-dialog
         title="密码重置成功"
-        :visible.sync="resetPasswordDialogVisible"
+        v-model="resetPasswordDialogVisible"
         width="400px"
         :close-on-click-modal="false"
         :close-on-press-escape="false"
@@ -270,13 +244,12 @@
             readonly
             style="margin-bottom: 20px;"
           >
-            <el-button
-              slot="append"
-              icon="el-icon-document-copy"
+            <template #append><el-button
+              icon="DocumentCopy"
               @click="copyPassword"
             >
               复制
-            </el-button>
+            </el-button></template>
           </el-input>
           <el-alert
             title="请立即保存密码，关闭对话框后将无法再次查看"
@@ -285,155 +258,13 @@
             show-icon
           />
         </div>
-        <div slot="footer" class="dialog-footer">
+        <template #footer><div class="dialog-footer">
           <el-button type="primary" @click="closeResetPasswordDialog">我已保存</el-button>
-        </div>
-      </el-dialog>
-
-      <el-dialog
-        title="目录配置（OpenLDAP / AD）"
-        :visible.sync="directoryDialogVisible"
-        width="720px"
-        :close-on-click-modal="false"
-        class="directory-config-dialog"
-      >
-        <el-alert
-          title="先选目录类型，再填地址和 DN；管理员密码留空表示不修改。"
-          type="info"
-          :closable="false"
-          show-icon
-          class="dialog-alert"
-        />
-        <el-form ref="directoryFormRef" size="small" :model="directoryForm" :rules="directoryRules" label-width="130px" class="directory-form">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="目录类型" prop="directoryType">
-                <el-select v-model="directoryForm.directoryType" style="width: 100%">
-                  <el-option label="OpenLDAP" value="openldap" />
-                  <el-option label="Windows AD" value="ad" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="LDAP 地址" prop="url">
-                <el-input v-model.trim="directoryForm.url" placeholder="ldap://10.0.0.10:389" />
-              </el-form-item>
-              <el-form-item label="Base DN" prop="baseDN">
-                <el-input v-model.trim="directoryForm.baseDN" placeholder="dc=example,dc=com" />
-              </el-form-item>
-              <el-form-item label="管理员 DN" prop="adminDN">
-                <el-input v-model.trim="directoryForm.adminDN" placeholder="cn=admin,dc=example,dc=com" />
-              </el-form-item>
-              <el-form-item label="管理员密码" prop="adminPass">
-                <el-input v-model.trim="directoryForm.adminPass" show-password placeholder="留空不修改" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="用户 OU DN" prop="userDN">
-                <el-input v-model.trim="directoryForm.userDN" placeholder="ou=people,dc=example,dc=com" />
-              </el-form-item>
-              <el-form-item label="默认初始密码" prop="userInitPassword">
-                <el-input v-model.trim="directoryForm.userInitPassword" show-password placeholder="新建用户默认密码" />
-              </el-form-item>
-              <el-form-item label="默认邮箱后缀" prop="defaultEmailSuffix">
-                <el-input v-model.trim="directoryForm.defaultEmailSuffix" placeholder="example.com" />
-              </el-form-item>
-              <el-form-item label="启用 LDAP 同步">
-                <el-switch v-model="directoryForm.ldapEnableSync" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-divider content-position="left">同步与 DN 规则</el-divider>
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="用户名规则" prop="syncUsernameRule">
-                <el-select v-model="directoryForm.syncUsernameRule" style="width: 100%" placeholder="用户名的生成方式">
-                  <el-option label="邮箱前段（@ 前部分）" value="email_prefix" />
-                  <el-option label="姓名拼音" value="pinyin" />
-                  <el-option label="工号" value="job_number" />
-                  <el-option label="按字段关联配置" value="field_relation" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="部门名规则" prop="syncGroupNameRule">
-                <el-select v-model="directoryForm.syncGroupNameRule" style="width: 100%" placeholder="部门名来源">
-                  <el-option label="中文名" value="name" />
-                  <el-option label="拼音" value="pinyin" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="用户 DN 的 RDN" prop="userRDNAttr">
-                <el-select v-model="directoryForm.userRDNAttr" style="width: 100%" placeholder="uid 或 cn">
-                  <el-option label="uid（OpenLDAP）" value="uid" />
-                  <el-option label="cn（AD）" value="cn" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="部门 DN 的 RDN" prop="groupRDNAttr">
-                <el-select v-model="directoryForm.groupRDNAttr" style="width: 100%" placeholder="cn 或 ou">
-                  <el-option label="cn" value="cn" />
-                  <el-option label="ou" value="ou" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form>
-        <div slot="footer" class="dialog-footer">
-          <el-button size="mini" @click="exportConfig">导出配置</el-button>
-          <el-button size="mini" @click="openConfigImport">导入配置</el-button>
-          <input ref="configImportInput" type="file" accept=".json,application/json" style="display: none" @change="onConfigImportFile">
-          <el-button size="mini" @click="directoryDialogVisible = false">取 消</el-button>
-          <el-button size="mini" type="primary" :loading="savingDirectoryConfig" @click="submitDirectoryConfig">保 存</el-button>
-        </div>
-      </el-dialog>
-
-      <el-dialog
-        title="平台对接向导（飞书 / 企微 / 钉钉）"
-        :visible.sync="thirdPartyDialogVisible"
-        width="760px"
-        :close-on-click-modal="false"
-      >
-        <el-alert
-          title="建议流程：选择平台 -> 填写凭证 -> 先测试连接 -> 再保存配置。"
-          type="info"
-          :closable="false"
-          show-icon
-          style="margin-bottom: 16px;"
-        />
-        <el-tabs v-model="thirdPartyTab">
-          <el-tab-pane label="钉钉" name="dingtalk">
-            <el-form ref="dingtalkFormRef" size="small" :model="dingtalkForm" :rules="dingtalkRules" label-width="130px">
-              <el-form-item label="平台标识" prop="flag"><el-input v-model.trim="dingtalkForm.flag" placeholder="默认 dingtalk" /></el-form-item>
-              <el-form-item label="AppKey" prop="appKey"><el-input v-model.trim="dingtalkForm.appKey" /></el-form-item>
-              <el-form-item label="AppSecret" prop="appSecret"><el-input v-model.trim="dingtalkForm.appSecret" show-password placeholder="留空表示不修改" /></el-form-item>
-              <el-form-item label="AgentId" prop="agentId"><el-input v-model.trim="dingtalkForm.agentId" /></el-form-item>
-              <el-form-item label="启用同步"><el-switch v-model="dingtalkForm.enableSync" /></el-form-item>
-            </el-form>
-          </el-tab-pane>
-          <el-tab-pane label="企业微信" name="wecom">
-            <el-form ref="wecomFormRef" size="small" :model="wecomForm" :rules="wecomRules" label-width="130px">
-              <el-form-item label="平台标识" prop="flag"><el-input v-model.trim="wecomForm.flag" placeholder="默认 wecom" /></el-form-item>
-              <el-form-item label="CorpId" prop="corpId"><el-input v-model.trim="wecomForm.corpId" /></el-form-item>
-              <el-form-item label="CorpSecret" prop="corpSecret"><el-input v-model.trim="wecomForm.corpSecret" show-password placeholder="留空表示不修改" /></el-form-item>
-              <el-form-item label="AgentId" prop="weComAgentId"><el-input-number v-model="wecomForm.weComAgentId" :min="1" style="width: 100%" /></el-form-item>
-              <el-form-item label="启用同步"><el-switch v-model="wecomForm.enableSync" /></el-form-item>
-            </el-form>
-          </el-tab-pane>
-          <el-tab-pane label="飞书" name="feishu">
-            <el-form ref="feishuFormRef" size="small" :model="feishuForm" :rules="feishuRules" label-width="130px">
-              <el-form-item label="平台标识" prop="flag"><el-input v-model.trim="feishuForm.flag" placeholder="默认 feishu" /></el-form-item>
-              <el-form-item label="AppId" prop="appId"><el-input v-model.trim="feishuForm.appId" /></el-form-item>
-              <el-form-item label="AppSecret" prop="appSecret"><el-input v-model.trim="feishuForm.appSecret" show-password placeholder="留空表示不修改" /></el-form-item>
-              <el-form-item label="启用同步"><el-switch v-model="feishuForm.enableSync" /></el-form-item>
-            </el-form>
-          </el-tab-pane>
-        </el-tabs>
-        <div slot="footer" class="dialog-footer">
-          <el-button size="mini" @click="thirdPartyDialogVisible = false">取 消</el-button>
-          <el-button size="mini" type="warning" :loading="testingThirdParty" @click="handleTestThirdParty">测试连接</el-button>
-          <el-button size="mini" type="primary" :loading="savingThirdParty" @click="handleSaveThirdParty">保 存</el-button>
-        </div>
+        </div></template>
       </el-dialog>
 
       <!-- 同步预览（Dry Run）结果 -->
-      <el-dialog title="同步预览" :visible.sync="previewDialogVisible" width="520px" append-to-body @close="previewResult = null">
+      <el-dialog title="同步预览" v-model="previewDialogVisible" width="520px" append-to-body @close="previewResult = null">
         <div v-if="previewResult" class="sync-preview-body">
           <el-descriptions :column="1" border size="small">
             <el-descriptions-item label="将新增到 LDAP">{{ previewResult.addCount }} 个用户</el-descriptions-item>
@@ -449,23 +280,24 @@
           </template>
           <p class="preview-tip">以上为预览结果，未执行实际同步。点击「执行同步」将正式同步到 LDAP。</p>
         </div>
-        <div slot="footer" class="dialog-footer">
+        <template #footer><div class="dialog-footer">
           <el-button size="small" @click="previewDialogVisible = false">关 闭</el-button>
           <el-button size="small" type="success" :disabled="!previewResult || (previewResult.addCount === 0 && previewResult.updateCount === 0)" @click="confirmSyncFromPreview">执行同步</el-button>
-        </div>
+        </div></template>
       </el-dialog>
+
+      <!-- 批量导入用户 -->
+      <user-import-dialog ref="importDialog" @done="getTableData" />
 
       <!-- 敏感操作二次确认：输入确认文案后执行 -->
-      <el-dialog title="敏感操作确认" :visible.sync="confirmDialogVisible" width="400px" append-to-body @close="closeConfirmDialog">
+      <el-dialog title="敏感操作确认" v-model="confirmDialogVisible" width="400px" append-to-body @close="closeConfirmDialog">
         <p class="confirm-dialog-tip">请输入「<strong>{{ confirmPhrase }}</strong>」以继续执行操作。</p>
-        <el-input v-model.trim="confirmInput" :placeholder="'请输入 ' + confirmPhrase" clearable @keyup.enter.native="submitConfirmDialog" />
-        <div slot="footer" class="dialog-footer">
+        <el-input v-model.trim="confirmInput" :placeholder="'请输入 ' + confirmPhrase" clearable @keyup.enter="submitConfirmDialog" />
+        <template #footer><div class="dialog-footer">
           <el-button size="small" @click="closeConfirmDialog">取 消</el-button>
           <el-button size="small" type="danger" :disabled="confirmInput !== confirmPhrase" @click="submitConfirmDialog">确 定</el-button>
-        </div>
+        </div></template>
       </el-dialog>
-
-      <notification-settings ref="notificationSettings" @saved="getSyncConfig" />
 
     </el-card>
   </div>
@@ -473,29 +305,22 @@
 
 <script>
 import JSEncrypt from 'jsencrypt'
-import Treeselect from '@riophae/vue-treeselect'
-import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import { getUsers, createUser, updateUserById, batchDeleteUserByIds, changeUserStatus, syncDingTalkUsersApi, syncWeComUsersApi, syncFeiShuUsersApi, syncOpenLdapUsersApi, syncSqlUsers, syncSqlUsersPreview } from '@/api/personnel/user'
 import { resetPassword } from '@/api/system/user'
 import { getRoles } from '@/api/system/role'
 import { getGroupTree } from '@/api/personnel/group'
-import { getConfig, updateDirectoryConfig, testThirdPartyConfig, updateThirdPartyConfig, importConfig } from '@/api/system/base'
-import NotificationSettings from '@/components/NotificationSettings/index.vue'
+import { getConfig } from '@/api/system/base'
+import PageHeader from '@/components/PageHeader/index.vue'
+import UserImportDialog from '@/components/UserImportDialog/index.vue'
 import { export_json_to_excel } from '@/vendor/Export2Excel'
 import { loadTableColumnConfig, saveTableColumnConfig, defaultUserColumns, STORAGE_KEY_USER_TABLE } from '@/utils/tableColumnSettings'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
 
 export default {
   name: 'User',
   components: {
-    Treeselect,
-    NotificationSettings
-  },
-  props: {
-    disabled: { // username 默认不可编辑，若需要至为可编辑，请（在新增和编辑处）去掉这个值的控制，且配合后端的ldap-user-name-modify配置使用
-      type: Boolean,
-      default: false
-    }
+    PageHeader,
+    UserImportDialog
   },
   data() {
     var checkPhone = (rule, value, callback) => {
@@ -511,6 +336,8 @@ export default {
       }
     }
     return {
+      // username 默认不可编辑（新增时可编辑、编辑时禁用）；如需放开请配合后端 ldap-user-name-modify
+      disabled: false,
       // 查询参数
       params: {
         username: '',
@@ -529,6 +356,13 @@ export default {
       isUpdate: false,
       // 部门信息数据
       treeselectValue: 0,
+      // el-tree-select 字段映射（替代旧 vue-treeselect 的 normalizer）
+      treeSelectProps: {
+        value: 'ID',
+        children: 'children',
+        label: (data) => data.groupType + '=' + data.groupName,
+        disabled: (data) => data.groupType === 'ou' || data.groupName === 'root'
+      },
       // 角色
       roles: [],
       // 部门信息
@@ -536,7 +370,7 @@ export default {
 
       passwordType: 'password',
 
-      publicKey: process.env.VUE_APP_PUBLIC_KEY,
+      publicKey: import.meta.env.VITE_APP_PUBLIC_KEY,
 
       // dialog对话框
       submitLoading: false,
@@ -618,85 +452,8 @@ export default {
       resetPasswordDialogVisible: false,
       newPassword: '',
       resetUsername: '',
-      directoryDialogVisible: false,
-      savingDirectoryConfig: false,
-      directoryForm: {
-        directoryType: 'openldap',
-        url: '',
-        baseDN: '',
-        adminDN: '',
-        adminPass: '',
-        userDN: '',
-        userInitPassword: '',
-        defaultEmailSuffix: '',
-        ldapEnableSync: false,
-        syncUsernameRule: 'email_prefix',
-        syncGroupNameRule: 'name',
-        userRDNAttr: 'uid',
-        groupRDNAttr: 'cn'
-      },
-      directoryRules: {
-        directoryType: [
-          { required: true, message: '请选择目录类型', trigger: 'change' }
-        ],
-        url: [
-          { required: true, message: '请输入 LDAP 地址', trigger: 'blur' }
-        ],
-        baseDN: [
-          { required: true, message: '请输入 Base DN', trigger: 'blur' }
-        ],
-        adminDN: [
-          { required: true, message: '请输入管理员 DN', trigger: 'blur' }
-        ],
-        userDN: [
-          { required: true, message: '请输入用户 OU DN', trigger: 'blur' }
-        ],
-        userInitPassword: [
-          { required: true, message: '请输入默认初始密码', trigger: 'blur' }
-        ],
-        defaultEmailSuffix: [
-          { required: true, message: '请输入默认邮箱后缀', trigger: 'blur' }
-        ]
-      },
-      thirdPartyDialogVisible: false,
-      thirdPartyTab: 'dingtalk',
-      testingThirdParty: false,
-      savingThirdParty: false,
-      dingtalkForm: {
-        platform: 'dingtalk',
-        flag: 'dingtalk',
-        appKey: '',
-        appSecret: '',
-        agentId: '',
-        enableSync: false
-      },
-      wecomForm: {
-        platform: 'wecom',
-        flag: 'wecom',
-        corpId: '',
-        corpSecret: '',
-        weComAgentId: 1,
-        enableSync: false
-      },
-      feishuForm: {
-        platform: 'feishu',
-        flag: 'feishu',
-        appId: '',
-        appSecret: '',
-        enableSync: false
-      },
-      dingtalkRules: {
-        appKey: [{ required: true, message: '请输入 AppKey', trigger: 'blur' }]
-      },
-      wecomRules: {
-        corpId: [{ required: true, message: '请输入 CorpId', trigger: 'blur' }],
-        weComAgentId: [{ required: true, message: '请输入 AgentId', trigger: 'change' }]
-      },
-      feishuRules: {
-        appId: [{ required: true, message: '请输入 AppId', trigger: 'blur' }]
-      },
 
-      // 同步配置
+      // 同步配置（驱动目录类型标签与「更多操作」中的同步入口可见性）
       syncConfig: {
         ldapEnableSync: false,
         dingTalkEnableSync: false,
@@ -758,15 +515,15 @@ export default {
       this.columnConfig.visible = {}
       this.columnConfig.widths = {}
       defaultUserColumns.forEach(c => {
-        this.$set(this.columnConfig.visible, c.prop, c.visible !== false)
-        if (c.width) this.$set(this.columnConfig.widths, c.prop, c.width)
+        this.columnConfig.visible[c.prop] = c.visible !== false
+        if (c.width) this.columnConfig.widths[c.prop] = c.width
       })
       saveTableColumnConfig(STORAGE_KEY_USER_TABLE, this.columnConfig)
       Message.success('已重置为默认列')
     },
     handleUserTableHeaderDragend(newWidth, oldWidth, column) {
       if (column && column.property) {
-        this.$set(this.columnConfig.widths, column.property, newWidth)
+        this.columnConfig.widths[column.property] = newWidth
         saveTableColumnConfig(STORAGE_KEY_USER_TABLE, this.columnConfig)
       }
     },
@@ -813,167 +570,16 @@ export default {
         console.error('获取同步配置失败:', error)
       }
     },
-    async exportConfig() {
-      try {
-        const res = await getConfig()
-        const data = res.data || {}
-        const exportData = {
-          directoryType: data.directoryType || 'openldap',
-          url: data.url || '',
-          baseDN: data.baseDN || '',
-          adminDN: data.adminDN || '',
-          adminPass: '',
-          userDN: data.userDN || '',
-          userInitPassword: data.userInitPassword || '',
-          defaultEmailSuffix: data.defaultEmailSuffix || '',
-          ldapEnableSync: !!data.ldapEnableSync,
-          syncUsernameRule: data.syncUsernameRule || 'email_prefix',
-          syncGroupNameRule: data.syncGroupNameRule || 'name',
-          userRDNAttr: data.userRDNAttr || 'uid',
-          groupRDNAttr: data.groupRDNAttr || 'cn'
-        }
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-        const a = document.createElement('a')
-        a.href = URL.createObjectURL(blob)
-        a.download = `go-ldap-admin-config-${new Date().toISOString().slice(0, 10)}.json`
-        a.click()
-        URL.revokeObjectURL(a.href)
-        Message.success('配置已导出')
-      } catch (e) {
-        Message.error('导出失败')
-      }
-    },
-    openConfigImport() {
-      this.$refs.configImportInput && this.$refs.configImportInput.click()
-    },
-    async onConfigImportFile(e) {
-      const file = e.target && e.target.files[0]
-      if (!file) return
-      e.target.value = ''
-      try {
-        const text = await new Promise((resolve, reject) => {
-          const r = new FileReader()
-          r.onload = () => resolve(r.result)
-          r.onerror = reject
-          r.readAsText(file)
-        })
-        const data = JSON.parse(text)
-        await importConfig(data)
-        Message.success('配置已导入，请刷新或重新打开目录配置查看')
-        this.getSyncConfig()
-        this.directoryDialogVisible = false
-      } catch (err) {
-        Message.error('导入失败：' + (err.msg || err.message || '无效的 JSON'))
-      }
-    },
-    openDirectoryConfig() {
-      const dirType = (this.syncConfig.directoryType || 'openldap').toLowerCase()
-      this.directoryForm = {
-        directoryType: dirType,
-        url: this.syncConfig.url || '',
-        baseDN: this.syncConfig.baseDN || '',
-        adminDN: this.syncConfig.adminDN || '',
-        adminPass: '',
-        userDN: this.syncConfig.userDN || '',
-        userInitPassword: this.syncConfig.userInitPassword || '',
-        defaultEmailSuffix: this.syncConfig.defaultEmailSuffix || '',
-        ldapEnableSync: !!this.syncConfig.ldapEnableSync,
-        syncUsernameRule: this.syncConfig.syncUsernameRule || 'email_prefix',
-        syncGroupNameRule: this.syncConfig.syncGroupNameRule || 'name',
-        userRDNAttr: this.syncConfig.userRDNAttr || (dirType === 'ad' ? 'cn' : 'uid'),
-        groupRDNAttr: this.syncConfig.groupRDNAttr || 'cn'
-      }
-      this.directoryDialogVisible = true
-    },
-    submitDirectoryConfig() {
-      this.$refs.directoryFormRef.validate(async valid => {
-        if (!valid) {
-          return
-        }
-        this.savingDirectoryConfig = true
-        try {
-          await updateDirectoryConfig(this.directoryForm)
-          this.$message.success('目录配置已保存')
-          this.directoryDialogVisible = false
-          this.getSyncConfig()
-        } finally {
-          this.savingDirectoryConfig = false
-        }
-      })
-    },
-    openThirdPartyConfig() {
-      this.dingtalkForm = {
-        platform: 'dingtalk',
-        flag: this.syncConfig.dingTalkFlag || 'dingtalk',
-        appKey: this.syncConfig.dingTalkAppKey || '',
-        appSecret: '',
-        agentId: this.syncConfig.dingTalkAgentId || '',
-        enableSync: !!this.syncConfig.dingTalkEnableSync
-      }
-      this.wecomForm = {
-        platform: 'wecom',
-        flag: this.syncConfig.weComFlag || 'wecom',
-        corpId: this.syncConfig.weComCorpId || '',
-        corpSecret: '',
-        weComAgentId: this.syncConfig.weComAgentId || 1,
-        enableSync: !!this.syncConfig.weComEnableSync
-      }
-      this.feishuForm = {
-        platform: 'feishu',
-        flag: this.syncConfig.feiShuFlag || 'feishu',
-        appId: this.syncConfig.feiShuAppId || '',
-        appSecret: '',
-        enableSync: !!this.syncConfig.feiShuEnableSync
-      }
-      this.thirdPartyTab = 'dingtalk'
-      this.thirdPartyDialogVisible = true
-    },
-    getCurrentThirdPartyForm() {
-      if (this.thirdPartyTab === 'wecom') {
-        return this.wecomForm
-      }
-      if (this.thirdPartyTab === 'feishu') {
-        return this.feishuForm
-      }
-      return this.dingtalkForm
-    },
-    getCurrentThirdPartyRefName() {
-      if (this.thirdPartyTab === 'wecom') {
-        return 'wecomFormRef'
-      }
-      if (this.thirdPartyTab === 'feishu') {
-        return 'feishuFormRef'
-      }
-      return 'dingtalkFormRef'
-    },
-    handleTestThirdParty() {
-      const refName = this.getCurrentThirdPartyRefName()
-      const form = this.getCurrentThirdPartyForm()
-      this.$refs[refName].validate(async valid => {
-        if (!valid) return
-        this.testingThirdParty = true
-        try {
-          await testThirdPartyConfig(form)
-          this.$message.success('连接测试成功')
-        } finally {
-          this.testingThirdParty = false
-        }
-      })
-    },
-    handleSaveThirdParty() {
-      const refName = this.getCurrentThirdPartyRefName()
-      const form = this.getCurrentThirdPartyForm()
-      this.$refs[refName].validate(async valid => {
-        if (!valid) return
-        this.savingThirdParty = true
-        try {
-          await updateThirdPartyConfig(form)
-          this.$message.success('平台配置已保存')
-          this.getSyncConfig()
-        } finally {
-          this.savingThirdParty = false
-        }
-      })
+    // 「更多操作」下拉
+    handleMoreCommand(cmd) {
+      if (cmd === 'batchSync') this.batchSync()
+      else if (cmd === 'syncPreview') this.syncPreview()
+      else if (cmd === 'batchImport') this.$refs.importDialog.open()
+      else if (cmd === 'export') this.exportUserList()
+      else if (cmd === 'syncLdap') this.syncOpenLdapUsers()
+      else if (cmd === 'syncDing') this.syncDingTalkUsers()
+      else if (cmd === 'syncFeishu') this.syncFeiShuUsers()
+      else if (cmd === 'syncWecom') this.syncWeComUsers()
     },
     // 查询
     search() {
@@ -1370,14 +976,6 @@ export default {
       this.getTableData()
     },
     // treeselect
-    normalizer(node) {
-      return {
-        id: node.ID,
-        label: node.groupType + '=' + node.groupName,
-        isDisabled: node.groupType === 'ou' || node.groupName === 'root',
-        children: node.children
-      }
-    },
     treeselectInput(value) {
       this.treeselectValue = value
     },
@@ -1534,13 +1132,6 @@ export default {
     align-items: center;
     margin-top: 12px;
     margin-bottom: 12px;
-  }
-
-  .dialog-alert {
-    margin-bottom: 16px;
-  }
-  .directory-form .el-divider {
-    margin: 20px 0 16px;
   }
 
   .dialog-footer {

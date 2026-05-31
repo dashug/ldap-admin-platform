@@ -5,7 +5,7 @@
       <p class="err-title">没有访问权限</p>
       <p class="err-desc">当前账号无权访问该页面，请联系管理员或返回</p>
       <div class="err-actions">
-        <el-button icon="el-icon-arrow-left" @click="back">返回上页</el-button>
+        <el-button icon="ArrowLeft" @click="back">返回上页</el-button>
         <router-link to="/dashboard">
           <el-button type="primary">返回首页</el-button>
         </router-link>
@@ -30,7 +30,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "~@/styles/variables.scss";
+@import "@/styles/variables.scss";
 
 .err-page {
   min-height: calc(100vh - 56px);

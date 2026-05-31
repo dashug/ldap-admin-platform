@@ -1,11 +1,10 @@
+// Vite：用 import.meta.glob 列出所有 svg 图标名（替代 webpack 的 require.context）
+const modules = import.meta.glob('../../icons/svg/*.svg')
+const re = /\/([^/]+)\.svg$/
 
-const req = require.context('@/icons/svg', false, /\.svg$/)
-const requireAll = requireContext => requireContext.keys()
-
-const re = /\.\/(.*)\.svg/
-
-const icons = requireAll(req).map(i => {
-  return i.match(re)[1]
-})
+const icons = Object.keys(modules).map(path => {
+  const m = path.match(re)
+  return m ? m[1] : ''
+}).filter(Boolean)
 
 export default icons

@@ -271,7 +271,8 @@ func InitData() {
 		{
 			Model:         gorm.Model{ID: 1},
 			Username:      "admin",
-			Password:      tools.NewGenPasswd(config.Conf.Ldap.AdminPass),
+			// 平台本地管理员账号不下发到 LDAP，密码以 bcrypt 不可逆哈希存储
+			Password: tools.HashPassword(config.Conf.Ldap.AdminPass),
 			Nickname:      "管理员",
 			GivenName:     "最强后台",
 			Mail:          "admin@" + config.Conf.Ldap.DefaultEmailSuffix,
@@ -306,7 +307,7 @@ func InitData() {
 	// 3.1 当开启初始化数据时，始终将 admin 用户密码与 config 中的 ldap.admin-pass 同步，避免配置改了但库内仍是旧密码导致无法登录
 	var adminUser model.User
 	if err := DB.Where("username = ?", "admin").First(&adminUser).Error; err == nil {
-		newPassHash := tools.NewGenPasswd(config.Conf.Ldap.AdminPass)
+		newPassHash := tools.HashPassword(config.Conf.Ldap.AdminPass)
 		if err := DB.Model(&model.User{}).Where("username = ?", "admin").Update("password", newPassHash).Error; err != nil {
 			Log.Warnf("同步 admin 密码到配置失败: %v", err)
 		}
@@ -867,16 +868,23 @@ func InitData() {
 	}
 
 	if len(newRoleCasbin) > 0 {
-		rules := make([][]string, 0)
+		// 注意：gorm-adapter 对批量 AddPolicies 的自动持久化在此版本下不生效，
+		// 会导致策略仅存在于内存、重启（init-data=false）后管理员丢失绝大部分接口权限。
+		// 故改用逐条 AddPolicy（已验证可正确落库）。
+		var added, skipped, failed int
 		for _, c := range newRoleCasbin {
-			rules = append(rules, []string{
-				c.Keyword, c.Path, c.Method,
-			})
+			ok, err := CasbinEnforcer.AddPolicy(c.Keyword, c.Path, c.Method)
+			switch {
+			case err != nil:
+				failed++
+				Log.Errorf("写入casbin策略失败 [%s %s %s]：%v", c.Keyword, c.Method, c.Path, err)
+			case !ok:
+				skipped++ // 策略已存在（如 apiKey 权限已由 ensureApiKeyPolicies 写入）
+			default:
+				added++
+			}
 		}
-		isAdd, err := CasbinEnforcer.AddPolicies(rules)
-		if !isAdd {
-			Log.Errorf("写入casbin数据失败：%v", err)
-		}
+		Log.Infof("初始化 casbin 策略完成，新增 %d 条，已存在跳过 %d 条，失败 %d 条", added, skipped, failed)
 	}
 
 	// 6.写入分组

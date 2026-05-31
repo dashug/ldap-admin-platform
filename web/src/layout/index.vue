@@ -12,12 +12,14 @@
         <settings />
       </right-panel>
     </div>
+    <command-palette ref="cmdk" />
   </div>
 </template>
 
 <script>
 import RightPanel from '@/components/RightPanel' //这个是设置的icon组件
 import { AppMain, Navbar, Settings, Sidebar, TagsView } from './components'
+import CommandPalette from '@/components/CommandPalette/index.vue'
 import ResizeMixin from './mixin/ResizeHandler'
 import { mapState } from 'vuex'
 
@@ -29,7 +31,8 @@ export default {
     RightPanel,
     Settings,
     Sidebar,
-    TagsView
+    TagsView,
+    CommandPalette
   },
   mixins: [ResizeMixin],
   computed: {
@@ -58,8 +61,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "~@/styles/mixin.scss";
-@import "~@/styles/variables.scss";
+@import "@/styles/mixin.scss";
+@import "@/styles/variables.scss";
 
 .app-wrapper {
   @include clearfix;

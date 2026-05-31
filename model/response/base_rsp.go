@@ -50,6 +50,11 @@ type BaseConfigRsp struct {
 	SmtpFrom string `json:"smtpFrom"`
 	// 用户/部门创建或同步后 HTTP 回调地址（前端可配置）
 	WebhookURL string `json:"webhookUrl"`
+	// 是否已配置 Webhook 签名密钥（密钥本身不回传）
+	WebhookSecretSet bool `json:"webhookSecretSet"`
+	// 定时自动同步配置
+	AutoSyncEnabled bool   `json:"autoSyncEnabled"`
+	AutoSyncCron    string `json:"autoSyncCron"`
 }
 
 // LDAPStatusRsp LDAP 连接状态

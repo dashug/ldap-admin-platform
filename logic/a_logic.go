@@ -400,6 +400,8 @@ func ConvertUserData(flag string, remoteData []map[string]any) (users []*model.U
 
 func InitCron() {
 	c := cron.New(cron.WithSeconds())
+	// 绑定全局 cron 实例并按配置注册「统一定时自动同步」任务（见 sync_scheduler.go）
+	bindAutoSyncCron(c)
 
 	if config.Conf.DingTalk.EnableSync {
 		//启动定时任务

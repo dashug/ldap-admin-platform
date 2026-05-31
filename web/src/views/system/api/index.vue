@@ -1,55 +1,47 @@
 <template>
   <div>
-    <el-card class="container-card" shadow="always">
-      <el-form size="mini" :inline="true" :model="params" class="demo-form-inline">
-        <el-form-item label="访问路径">
-          <el-input v-model.trim="params.path" clearable placeholder="访问路径" @keyup.enter.native="search" @clear="search" />
-        </el-form-item>
-        <el-form-item label="所属类别">
-          <el-input v-model.trim="params.category" clearable placeholder="所属类别" @keyup.enter.native="search" @clear="search" />
-        </el-form-item>
-        <el-form-item label="请求方法">
-          <el-select v-model.trim="params.method" clearable placeholder="请求方式" @change="search" @clear="search">
-            <el-option label="GET[获取资源]" value="GET" />
-            <el-option label="POST[新增资源]" value="POST" />
-            <el-option label="PUT[全部更新]" value="PUT" />
-            <el-option label="PATCH[增量更新]" value="PATCH" />
-            <el-option label="DELETE[删除资源]" value="DELETE" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="创建人">
-          <el-input v-model.trim="params.creator" clearable placeholder="创建人" @keyup.enter.native="search" @clear="search" />
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="el-icon-search" type="primary" @click="search">查询</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" icon="el-icon-plus" type="warning" @click="create">新增</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button :disabled="multipleSelection.length === 0" :loading="loading" icon="el-icon-delete" type="danger" @click="batchDelete">批量删除</el-button>
-        </el-form-item>
-      </el-form>
+    <page-header title="接口管理" subtitle="管理可被 RBAC 授权的后端 API 接口">
+      <template #actions>
+        <el-button type="primary" icon="Plus" @click="create">新建接口</el-button>
+      </template>
+    </page-header>
+
+    <el-card class="container-card" shadow="never">
+      <div class="filter-bar">
+        <el-input v-model.trim="params.path" prefix-icon="Search" clearable placeholder="搜索访问路径" style="width: 200px;" @keyup.enter="search" @clear="search" />
+        <el-input v-model.trim="params.category" clearable placeholder="所属类别" style="width: 130px;" @keyup.enter="search" @clear="search" />
+        <el-select v-model.trim="params.method" clearable placeholder="请求方式" style="width: 130px;" @change="search" @clear="search">
+          <el-option label="GET" value="GET" />
+          <el-option label="POST" value="POST" />
+          <el-option label="PUT" value="PUT" />
+          <el-option label="PATCH" value="PATCH" />
+          <el-option label="DELETE" value="DELETE" />
+        </el-select>
+        <el-input v-model.trim="params.creator" clearable placeholder="创建人" style="width: 120px;" @keyup.enter="search" @clear="search" />
+        <el-button :loading="loading" icon="Search" @click="search">查询</el-button>
+        <div class="filter-bar__spacer" />
+        <el-button :disabled="multipleSelection.length === 0" :loading="loading" plain type="danger" icon="Delete" @click="batchDelete">批量删除</el-button>
+      </div>
 
       <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column show-overflow-tooltip sortable prop="path" label="访问路径" />
         <el-table-column show-overflow-tooltip sortable prop="category" label="所属类别" />
         <el-table-column show-overflow-tooltip sortable prop="method" label="请求方式" align="center">
-          <template slot-scope="scope">
-            <el-tag size="small" :type="scope.row.method | methodTagFilter" disable-transitions>{{ scope.row.method }}</el-tag>
+          <template #default="scope">
+            <el-tag size="small" :type="methodTagFilter(scope.row.method)" disable-transitions>{{ scope.row.method }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column show-overflow-tooltip sortable prop="creator" label="创建人" />
         <el-table-column show-overflow-tooltip sortable prop="remark" label="说明" />
         <el-table-column fixed="right" label="操作" align="center" width="120">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tooltip content="编辑" effect="dark" placement="top">
-              <el-button size="mini" icon="el-icon-edit" circle type="primary" @click="update(scope.row)" />
+              <el-button size="small" icon="Edit" circle type="primary" @click="update(scope.row)" />
             </el-tooltip>
             <el-tooltip class="delete-popover" content="删除" effect="dark" placement="top">
-              <el-popconfirm title="确定删除吗？" @onConfirm="singleDelete(scope.row.ID)">
-                <el-button slot="reference" size="mini" icon="el-icon-delete" circle type="danger" />
+              <el-popconfirm title="确定删除吗？" @confirm="singleDelete(scope.row.ID)">
+                <template #reference><el-button size="small" icon="Delete" circle type="danger"  /></template>
               </el-popconfirm>
             </el-tooltip>
           </template>
@@ -68,7 +60,7 @@
         @current-change="handleCurrentChange"
       />
 
-      <el-dialog :title="dialogFormTitle" :visible.sync="dialogFormVisible">
+      <el-dialog :title="dialogFormTitle" v-model="dialogFormVisible">
         <el-form ref="dialogForm" size="small" :model="dialogFormData" :rules="dialogFormRules" label-width="120px">
           <el-form-item label="访问路径" prop="path">
             <el-input v-model.trim="dialogFormData.path" placeholder="访问路径" />
@@ -89,10 +81,10 @@
             <el-input v-model.trim="dialogFormData.remark" type="textarea" placeholder="说明" show-word-limit maxlength="100" />
           </el-form-item>
         </el-form>
-        <div slot="footer" class="dialog-footer">
-          <el-button size="mini" @click="cancelForm()">取 消</el-button>
-          <el-button size="mini" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
-        </div>
+        <template #footer><div class="dialog-footer">
+          <el-button size="small" @click="cancelForm()">取 消</el-button>
+          <el-button size="small" :loading="submitLoading" type="primary" @click="submitForm()">确 定</el-button>
+        </div></template>
       </el-dialog>
 
     </el-card>
@@ -101,27 +93,12 @@
 
 <script>
 import { getApis, createApi, updateApiById, batchDeleteApiByIds } from '@/api/system/api'
-import { Message } from 'element-ui'
+import { ElMessage as Message } from 'element-plus'
+import PageHeader from '@/components/PageHeader/index.vue'
 
 export default {
   name: 'Api',
-  filters: {
-    methodTagFilter(val) {
-      if (val === 'GET') {
-        return ''
-      } else if (val === 'POST') {
-        return 'success'
-      } else if (val === 'PUT') {
-        return 'info'
-      } else if (val === 'PATCH') {
-        return 'warning'
-      } else if (val === 'DELETE') {
-        return 'danger'
-      } else {
-        return 'info'
-      }
-    }
-  },
+  components: { PageHeader },
   data() {
     return {
       // 查询参数
@@ -178,6 +155,21 @@ export default {
     this.getTableData()
   },
   methods: {
+    methodTagFilter(val) {
+      if (val === 'GET') {
+        return ''
+      } else if (val === 'POST') {
+        return 'success'
+      } else if (val === 'PUT') {
+        return 'info'
+      } else if (val === 'PATCH') {
+        return 'warning'
+      } else if (val === 'DELETE') {
+        return 'danger'
+      } else {
+        return 'info'
+      }
+    },
     // 查询
     search() {
       this.params.pageNum = 1

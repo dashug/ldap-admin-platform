@@ -63,6 +63,8 @@ func dbAutoMigrate() {
 		&model.OperationLog{},
 		&model.FieldRelation{},
 		&model.ApiKey{},
+		&model.WebhookDelivery{},
+		&model.SyncRun{},
 	)
 }
 

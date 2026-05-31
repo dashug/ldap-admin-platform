@@ -1,5 +1,5 @@
 <template>
-  <el-scrollbar ref="scrollContainer" :vertical="false" class="scroll-container" @wheel.native.prevent="handleScroll">
+  <el-scrollbar ref="scrollContainer" :vertical="false" class="scroll-container" @wheel.prevent="handleScroll">
     <slot />
   </el-scrollbar>
 </template>
@@ -16,29 +16,40 @@ export default {
   },
   computed: {
     scrollWrapper() {
-      return this.$refs.scrollContainer.$refs.wrap
+      const sc = this.$refs.scrollContainer
+      if (!sc) return null
+      // Element Plus 暴露 wrapRef；兼容旧的 $refs.wrap
+      return sc.wrapRef || (sc.$refs && sc.$refs.wrap) || null
     }
   },
   mounted() {
-    this.scrollWrapper.addEventListener('scroll', this.emitScroll, true)
+    if (this.scrollWrapper) {
+      this.scrollWrapper.addEventListener('scroll', this.emitScroll, true)
+    }
   },
-  beforeDestroy() {
-    this.scrollWrapper.removeEventListener('scroll', this.emitScroll)
+  beforeUnmount() {
+    if (this.scrollWrapper) {
+      this.scrollWrapper.removeEventListener('scroll', this.emitScroll)
+    }
   },
   methods: {
     handleScroll(e) {
       const eventDelta = e.wheelDelta || -e.deltaY * 40
       const $scrollWrapper = this.scrollWrapper
+      if (!$scrollWrapper) return
       $scrollWrapper.scrollLeft = $scrollWrapper.scrollLeft + eventDelta / 4
     },
     emitScroll() {
       this.$emit('scroll')
     },
     moveToTarget(currentTag) {
-      const $container = this.$refs.scrollContainer.$el
-      const $containerWidth = $container.offsetWidth
+      const $container = this.$refs.scrollContainer && this.$refs.scrollContainer.$el
       const $scrollWrapper = this.scrollWrapper
-      const tagList = this.$parent.$refs.tag
+      if (!$container || !$scrollWrapper) return
+      const $containerWidth = $container.offsetWidth
+      let tagList = this.$parent.$refs.tag
+      if (!tagList) return
+      if (!Array.isArray(tagList)) tagList = [tagList]
 
       let firstTag = null
       let lastTag = null
