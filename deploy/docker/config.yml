@@ -1,0 +1,108 @@
+# docker-compose 部署用配置：LDAP 指向同网络的 openldap 服务，数据库默认 sqlite。
+# 由 docker-compose.yml 以只读卷挂载到容器 /app/config.yml。
+system:
+  mode: release
+  url-path-prefix: api
+  port: 8888
+  # 首次启动初始化数据（admin 账号、菜单、角色等）；初始化完成后可改为 false
+  init-data: true
+  # 账户过期策略：N 天未登录自动禁用，0 表示关闭
+  inactive-days: 0
+  # 用户/部门创建或同步后的 Webhook 回调地址（留空则不发）
+  webhook-url: ""
+  # Webhook HMAC-SHA256 签名密钥（留空则不签名）
+  webhook-secret: ""
+  # 定时自动同步（cron 6 段含秒），默认关闭
+  auto-sync-enabled: false
+  auto-sync-cron: "0 0 */6 * * *"
+
+logs:
+  level: 0
+  path: data/logs
+  max-size: 50
+  max-backups: 100
+  max-age: 30
+  compress: false
+
+database:
+  # 数据库类型 mysql / sqlite3
+  driver: sqlite3
+  source: data/go-ldap-admin.db
+
+mysql:
+  username: root
+  password: 123456
+  database: go_ldap_admin
+  host: mysql
+  port: 3306
+  query: parseTime=True&loc=Local&timeout=10000ms
+  log-mode: false
+  table-prefix: tb
+  charset: utf8mb4
+  collation: utf8mb4_general_ci
+
+jwt:
+  realm: ldap-admin jwt
+  key: please-change-this-secret-key
+  timeout: 12000
+  max-refresh: 12000
+
+rate-limit:
+  fill-interval: 50
+  capacity: 200
+
+email:
+  port: '465'
+  user: 'example@example.com'
+  from: 'LDAP 管理平台'
+  host: 'smtp.example.com'
+  pass: 'your-password'
+
+ldap:
+  # 指向 compose 中的 openldap 服务
+  url: ldap://openldap:389
+  max-conn: 10
+  base-dn: "dc=example,dc=com"
+  admin-dn: "cn=admin,dc=example,dc=com"
+  admin-pass: "123456"
+  user-dn: "ou=people,dc=example,dc=com"
+  user-init-password: "123456"
+  group-name-modify: false
+  user-name-modify: false
+  user-password-encryption-type: "ssha"
+  default-email-suffix: "example.com"
+  # 是否将 LDAP 数据反向同步到平台数据库
+  enable-sync: false
+
+# 📢 即便用不到如下三段，也不要删除，否则可能出现奇怪的错误
+dingtalk:
+  flag: "dingtalk"
+  app-key: "xxxxxxxxxxxxxxx"
+  app-secret: "xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  agent-id: "12121212"
+  enable-sync: false
+  dept-sync-time: "0 30 2 * * *"
+  user-sync-time: "0 30 3 * * *"
+  dept-list:
+  is-update-syncd: false
+  user-leave-range: 0
+
+wecom:
+  flag: "wecom"
+  corp-id: "xxxx"
+  agent-id: 1000003
+  corp-secret: "xxxxx"
+  enable-sync: false
+  dept-sync-time: "0 30 2 * * *"
+  user-sync-time: "0 30 3 * * *"
+  is-update-syncd: false
+
+feishu:
+  flag: "feishu"
+  app-id: "xxxxxxx"
+  app-secret: "xxxxxxxxxxx"
+  enable-sync: false
+  dept-sync-time: "0 20 0 * * *"
+  user-sync-time: "0 40 0 * * *"
+  dept-list:
+  is-update-syncd: false

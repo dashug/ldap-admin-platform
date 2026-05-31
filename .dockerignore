@@ -1,0 +1,27 @@
+# 版本控制 / IDE
+.git
+.github
+.idea
+.vscode
+.worktrees
+
+# 前端依赖与构建产物（镜像内会重新安装/构建）
+web/node_modules
+web/dist
+public/static/dist
+
+# 本地数据与产物
+data
+.docker-data
+*.db
+*.log
+go-ldap-admin
+go-ldap-admin.bak
+bin
+release
+tmp
+
+# 文档与截图（构建用不到，缩小上下文）
+docs/screenshots
+
+# 注意：保留 config.yml、config/*.pem —— 编译期 go:embed 与运行期需要
