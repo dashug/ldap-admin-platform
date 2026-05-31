@@ -63,7 +63,41 @@
 - **设置**（管理员）：目录配置、平台对接、通知设置（Webhook 签名/重试/投递记录）、定时同步、登录安全（MFA）
 - **审计**：操作日志
 
-> 配置与运维相关功能的**图文使用说明**见 **[管理控制台使用指南](docs/admin-console-guide.md)**。
+> 各设置功能的详细**图文使用说明**见 **[管理控制台使用指南](docs/admin-console-guide.md)**。
+
+### 界面截图
+
+**侧边栏「设置」分区**（管理员可见，亦可 `⌘K` / `Ctrl+K` 快速跳转）
+
+<img src="docs/screenshots/settings-sidebar.png" width="260" alt="侧边栏设置分区">
+
+**目录配置**：OpenLDAP / AD 连接、DN 与同步规则；顶部实时连接状态、保存前「测试连接」、配置导入导出
+
+<img src="docs/screenshots/settings-directory.png" width="860" alt="目录配置">
+
+**平台对接**：钉钉 / 企业微信 / 飞书凭证配置，支持「先测试再保存」
+
+<img src="docs/screenshots/settings-thirdparty.png" width="860" alt="平台对接">
+
+**通知设置**：Webhook 回调（HMAC-SHA256 签名 + 失败重试 + 投递记录）与 SMTP 邮件通知
+
+<img src="docs/screenshots/settings-notification.png" width="860" alt="通知设置">
+
+**定时同步**：按 cron 周期自动同步各来源（部门 + 用户），含「立即同步」与运行记录
+
+<img src="docs/screenshots/settings-sync.png" width="860" alt="定时同步">
+
+**批量导入用户**：CSV / Excel 模板导入，列映射 + 预检（Dry-Run）
+
+<img src="docs/screenshots/user-batch-import.png" width="860" alt="批量导入用户">
+
+**登录安全（MFA / TOTP）**：扫码绑定 Authenticator，为管理员账号开启二次验证
+
+<img src="docs/screenshots/settings-security-mfa.png" width="860" alt="登录安全 MFA">
+
+**登录时二次验证**：已开启 MFA 的账号登录需额外输入 6 位动态验证码
+
+<img src="docs/screenshots/login-mfa.png" width="760" alt="登录动态验证码">
 
 ---
 
