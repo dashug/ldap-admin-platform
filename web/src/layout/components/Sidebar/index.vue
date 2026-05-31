@@ -255,8 +255,18 @@ export default {
   text-decoration: none;
   cursor: pointer;
   transition: background $transitionBase, color $transitionBase, box-shadow $transitionBase;
-  .nav__icon { font-size: 18px; width: 18px; flex: none; color: #64748b; transition: color $transitionBase; }
-  .nav__label { white-space: nowrap; overflow: hidden; }
+  .nav__icon {
+    font-size: 18px;
+    width: 20px;
+    height: 20px;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: color $transitionBase;
+  }
+  .nav__label { white-space: nowrap; overflow: hidden; line-height: 20px; }
   &:hover {
     background: rgba(255, 255, 255, 0.06);
     color: #fff;
