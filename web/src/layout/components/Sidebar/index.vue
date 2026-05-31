@@ -258,15 +258,16 @@ export default {
   .nav__icon {
     font-size: 18px;
     width: 20px;
-    height: 20px;
+    height: 40px;
     flex: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     color: #64748b;
     transition: color $transitionBase;
+    transform: translateY(3px); // 视觉对齐：补偿文字行盒比图标几何中心偏下约 3.5px
   }
-  .nav__label { white-space: nowrap; overflow: hidden; line-height: 20px; }
+  .nav__label { white-space: nowrap; overflow: hidden; line-height: 40px; }
   &:hover {
     background: rgba(255, 255, 255, 0.06);
     color: #fff;
