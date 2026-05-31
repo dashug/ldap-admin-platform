@@ -1,6 +1,6 @@
 # LDAP 管理平台（前后端一体）
 
-基于 Go + Vue 的 **OpenLDAP / Active Directory** 管理后台。本仓库为**前后端合并**结构，一次构建得到一个可执行文件，同时提供 REST API 与 Web 管理界面。
+基于 **Go + Vue 3** 的 **OpenLDAP / Active Directory** 管理后台。本仓库为**前后端合并**结构，一次构建得到一个可执行文件，同时提供 REST API 与 Web 管理界面。
 
 ---
 
@@ -9,7 +9,21 @@
 **本项目是在 [github.com/eryajf/go-ldap-admin](https://github.com/eryajf/go-ldap-admin) 基础上进行的二次开发与整合。**
 
 - 在保留原有功能的前提下，将后端与前端合并到同一仓库，并支持单二进制部署（前端资源嵌入可执行文件）。
+- **前端整体升级**：由原项目的 **Vue 2 + Element UI + vue-cli(webpack)** 迁移至 **Vue 3 + Element Plus + Vite**（详见下方「技术栈」）。
 - 感谢原项目作者 [eryajf](https://github.com/eryajf) 及所有贡献者，本项目的核心能力与设计均来源于原项目。
+
+---
+
+## 技术栈
+
+| 层 | 技术 |
+|----|------|
+| 后端 | Go + Gin + GORM（MySQL / SQLite）+ Casbin RBAC + JWT + robfig/cron |
+| 前端 | **Vue 3**（3.5）+ **Element Plus**（2.9）+ **Vite**（5）+ Vue Router 4 + Vuex 4 + ECharts |
+| 目录 | OpenLDAP / Active Directory（go-ldap）|
+| 集成 | 钉钉 / 企业微信 / 飞书 同步；Webhook 回调（HMAC 签名）；SMTP 邮件 |
+
+> 相比原项目，前端从 Vue 2 体系整体迁移到 Vue 3：`Element UI → Element Plus`、`vue-cli/webpack → Vite`、`Vue Router 3 → 4`、`Vuex 3 → 4`。因此前端构建需 **Node.js 18+**（Vite 5 要求）。
 
 ---
 
@@ -105,7 +119,7 @@
 
 ```
 ldap-admin-platform/
-├── web/                    # 前端 Vue 项目源码
+├── web/                    # 前端 Vue 3 项目源码（Vite + Element Plus）
 │   ├── src/
 │   ├── public/
 │   └── package.json
@@ -125,7 +139,7 @@ ldap-admin-platform/
 ## 环境要求
 
 - **Go** 1.16+（用于从源码构建）
-- **Node.js** 14+、**npm**（用于构建前端）
+- **Node.js** 18+、**npm**（用于构建前端 Vue 3 / Vite 5）
 - 若使用 MySQL：需已有 MySQL 服务；若使用 SQLite，无需额外数据库服务
 
 ---

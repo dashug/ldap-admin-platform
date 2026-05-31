@@ -183,7 +183,7 @@ func CommonUpdateUser(oldUser, newUser *model.User, groupId []uint) error {
 	}
 
 	err := ildap.User.Update(oldUser.Username, newUser)
-	if err != nil {
+	if err != nil && !errors.Is(err, common.ErrLDAPDisabled) {
 		return tools.NewLdapError(fmt.Errorf("%s", "在LDAP更新用户失败："+err.Error()))
 	}
 
@@ -212,7 +212,7 @@ func CommonUpdateUser(oldUser, newUser *model.User, groupId []uint) error {
 		}
 		//根据选择的部门，添加到部门内
 		err = ildap.Group.AddUserToGroup(group.GroupDN, newUser.UserDN)
-		if err != nil {
+		if err != nil && !errors.Is(err, common.ErrLDAPDisabled) {
 			return tools.NewLdapError(fmt.Errorf("%s", "向Ldap添加用户到分组关系失败："+err.Error()))
 		}
 	}
@@ -231,7 +231,7 @@ func CommonUpdateUser(oldUser, newUser *model.User, groupId []uint) error {
 			return tools.NewMySqlError(fmt.Errorf("%s", "在MySQL将用户从分组移除失败："+err.Error()))
 		}
 		err = ildap.Group.RemoveUserFromGroup(group.GroupDN, newUser.UserDN)
-		if err != nil {
+		if err != nil && !errors.Is(err, common.ErrLDAPDisabled) {
 			return tools.NewMySqlError(fmt.Errorf("%s", "在ldap将用户从分组移除失败："+err.Error()))
 		}
 	}
