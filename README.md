@@ -6,14 +6,14 @@
 
 ## 🚀 在线 Demo
 
-体验地址：**https://go-ldap-admin-demo.onrender.com**
+体验地址：<a href="https://go-ldap-admin-demo.onrender.com" target="_blank" rel="noopener noreferrer"><b>https://go-ldap-admin-demo.onrender.com</b></a>
 
 - 账号：`admin`　密码：`123456`
 - 说明：演示部署在 Render 免费实例，**首次访问可能需要约 30 秒冷启动**；为演示数据（sqlite，可能定期重置），未连接真实 LDAP。
 
 一键自助部署（使用仓库内 `render.yaml` 蓝图）：
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dashug/ldap-admin-platform)
+<a href="https://render.com/deploy?repo=https://github.com/dashug/ldap-admin-platform" target="_blank" rel="noopener noreferrer"><img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render"></a>
 
 ---
 
