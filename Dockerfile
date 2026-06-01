@@ -36,7 +36,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build \
 # ---------- 3) 运行时（极简） ----------
 FROM alpine:3.20
 WORKDIR /app
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata && mkdir -p /app/data
 ENV TZ=Asia/Shanghai
 COPY --from=server /out/go-ldap-admin ./go-ldap-admin
 # 镜像内置一份默认 config.yml；正式部署建议用卷挂载覆盖（见 docker-compose.yml）
