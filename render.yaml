@@ -1,0 +1,19 @@
+# Render 一键部署蓝图（Docker）。在 Render 控制台 New → Blueprint，连接本仓库即可。
+# 使用项目根目录的多阶段 Dockerfile 构建「前端已 embed」的单镜像；数据库用 sqlite（演示数据，实例重启会重置）。
+services:
+  - type: web
+    name: go-ldap-admin-demo
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: singapore
+    branch: main
+    healthCheckPath: /api/base/ping
+    autoDeploy: true
+    envVars:
+      # 应用监听 8888（来自 config.yml）；让 Render 路由到该端口
+      - key: PORT
+        value: "8888"
+      - key: TZ
+        value: Asia/Shanghai
