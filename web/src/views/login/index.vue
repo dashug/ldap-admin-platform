@@ -84,6 +84,8 @@
         <p class="login__sub">{{ greeting }}</p>
       </div>
 
+      <p v-if="isDemo" class="login__demo">演示账号 <b>admin</b> / <b>123456</b>　已预填，点「登录」即可</p>
+
       <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login__form" autocomplete="on" label-position="top" @submit.prevent="handleLogin">
         <el-form-item prop="username">
           <el-input
@@ -165,6 +167,8 @@ export default {
       focusField: '',
       pupilX: 0,
       pupilY: 0,
+      // 是否演示环境（托管域名）：预填账号并展示演示提示
+      isDemo: false,
       mfaRequired: false,
       loginForm: {
         username: '',
@@ -213,7 +217,8 @@ export default {
   mounted() {
     // 演示环境（Render / Fly / Railway 等托管域名）自动预填管理员账号，方便一键体验。
     // 仅作用于这些演示域名，自有域名/本地/正式部署不受影响。
-    if (/onrender\.com$|\.fly\.dev$|\.up\.railway\.app$/.test(location.hostname)) {
+    this.isDemo = /onrender\.com$|\.fly\.dev$|\.up\.railway\.app$/.test(location.hostname)
+    if (this.isDemo) {
       this.loginForm.username = 'admin'
       this.loginForm.password = '123456'
     }
@@ -461,6 +466,17 @@ export default {
   margin: 6px 0 26px;
   .login__title { margin: 0 0 8px; font-size: 24px; font-weight: 700; color: $slate900; letter-spacing: -0.01em; }
   .login__sub { margin: 0; font-size: 14px; color: $slate500; min-height: 20px; transition: color 0.2s ease; }
+}
+.login__demo {
+  margin: 0 0 18px;
+  padding: 9px 14px;
+  text-align: center;
+  font-size: 13px;
+  color: $themePrimary;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  border-radius: 10px;
+  b { font-weight: 600; }
 }
 
 /* ---------- 表单 ---------- */

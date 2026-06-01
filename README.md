@@ -6,7 +6,7 @@
 
 ## 🚀 在线 Demo
 
-体验地址：**https://go-ldap-admin-demo.onrender.com**　（登录框已预填，直接点「登录」即可）
+体验地址：**https://go-ldap-admin-demo.onrender.com**
 
 - 账号：`admin`　密码：`123456`
 - 说明：演示部署在 Render 免费实例，**首次访问可能需要约 30 秒冷启动**；为演示数据（sqlite，可能定期重置），未连接真实 LDAP。
