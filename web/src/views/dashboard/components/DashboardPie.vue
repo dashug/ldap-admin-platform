@@ -4,8 +4,9 @@
 
 <script>
 import * as echarts from 'echarts'
-import 'echarts/theme/macarons'
 import { debounce } from '@/utils'
+
+const BRAND = ['#6366f1', '#22d3ee', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e']
 
 export default {
   name: 'DashboardPie',
@@ -14,7 +15,7 @@ export default {
       type: Array,
       default: () => []
     },
-    height: { type: String, default: '300px' },
+    height: { type: String, default: '280px' },
     width: { type: String, default: '100%' }
   },
   data() {
@@ -29,7 +30,7 @@ export default {
     }
   },
   mounted() {
-    this.chart = echarts.init(this.$el, 'macarons')
+    this.chart = echarts.init(this.$el)
     this.updateChart()
     this.__resizeHandler = debounce(() => {
       if (this.chart) this.chart.resize()
@@ -52,17 +53,40 @@ export default {
         value: Number(item.dataCount) || 0,
         name: item.dataName || item.dataType
       }))
+      const total = data.reduce((s, d) => s + d.value, 0)
       this.chart.setOption({
-        title: { text: '数据占比', left: 'center', top: 8, textStyle: { fontSize: 14 } },
+        color: BRAND,
         tooltip: { trigger: 'item', formatter: '{b}：{c}（{d}%）' },
-        legend: { left: 'center', bottom: 8, data: data.map(d => d.name) },
+        title: {
+          text: String(total),
+          subtext: '总计',
+          left: '34%',
+          top: '41%',
+          textAlign: 'center',
+          textStyle: { fontSize: 26, fontWeight: 700, color: '#0f172a' },
+          subtextStyle: { fontSize: 12, color: '#94a3b8' }
+        },
+        legend: {
+          orient: 'vertical',
+          right: '4%',
+          top: 'center',
+          icon: 'circle',
+          itemWidth: 8,
+          itemHeight: 8,
+          itemGap: 12,
+          textStyle: { color: '#64748b', fontSize: 12 }
+        },
         series: [{
           name: '数量',
           type: 'pie',
-          radius: ['40%', '70%'],
-          center: ['50%', '45%'],
+          radius: ['56%', '78%'],
+          center: ['34%', '50%'],
+          avoidLabelOverlap: true,
+          itemStyle: { borderColor: '#fff', borderWidth: 3, borderRadius: 6 },
+          label: { show: false },
+          labelLine: { show: false },
           data,
-          emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.2)' } }
+          emphasis: { scale: true, scaleSize: 5 }
         }]
       })
     }

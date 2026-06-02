@@ -94,6 +94,10 @@
 
 ### 界面截图
 
+**概览仪表盘**：指标卡 + 目录构成环形图 + 各模块数量排行 + 数据分布雷达 + 最近操作
+
+<img src="docs/screenshots/dashboard.png" width="860" alt="概览仪表盘">
+
 **侧边栏「设置」分区**（管理员可见，亦可 `⌘K` / `Ctrl+K` 快速跳转）
 
 <img src="docs/screenshots/settings-sidebar.png" width="260" alt="侧边栏设置分区">

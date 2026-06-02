@@ -1,102 +1,125 @@
 <template>
-  <div class="dashboard-container">
-    <div class="dashboard-editor-container">
-      <!-- 页面标题 -->
-      <div class="page-header">
-        <h1 class="page-title">概览</h1>
-        <p class="page-desc">LDAP 管理平台运行状态与最近动态</p>
+  <div class="dashboard">
+    <!-- 页头 -->
+    <div class="dash-header">
+      <div class="dash-header__main">
+        <h1 class="dash-header__title">概览</h1>
+        <p class="dash-header__desc">LDAP 管理平台运行状态与最近动态</p>
       </div>
-      <!-- LDAP 连接状态 -->
-      <div v-if="ldapStatus.connected" class="ldap-banner ldap-banner--ok">
-        <el-icon class="ldap-banner__icon"><SuccessFilled /></el-icon>
-        <div class="ldap-banner__text">
-          <div class="ldap-banner__title">LDAP 连接正常</div>
-          <div v-if="ldapStatus.message" class="ldap-banner__desc">{{ ldapStatus.message }}</div>
-        </div>
+      <div class="dash-header__right">
+        <span class="status-pill" :class="ldapStatus.connected ? 'is-ok' : 'is-warn'">
+          <span class="status-pill__dot" />{{ ldapStatus.connected ? 'LDAP 已连接' : 'LDAP 未连接' }}
+        </span>
+        <el-button icon="Refresh" circle plain :loading="loading" title="刷新" @click="refreshAll" />
       </div>
-      <div v-else class="ldap-banner ldap-banner--warn">
-        <el-icon class="ldap-banner__icon"><WarningFilled /></el-icon>
-        <div class="ldap-banner__text">
-          <div class="ldap-banner__title">LDAP 尚未连接</div>
-          <div class="ldap-banner__desc">配置目录服务（OpenLDAP / AD）后即可同步并管理用户与组织。</div>
-        </div>
-        <el-button type="primary" plain size="small" @click="goConfig">去配置</el-button>
-      </div>
+    </div>
 
-      <!-- 首屏骨架屏 -->
-      <template v-if="loading">
-        <el-skeleton animated :throttle="300">
-          <template #template>
-            <el-row :gutter="24" style="margin-bottom: 24px;">
-              <el-col v-for="i in 6" :key="i" :xs="12" :sm="8" :lg="4">
-                <el-skeleton-item variant="image" style="height: 96px; border-radius: 14px;" />
-              </el-col>
-            </el-row>
-            <el-row :gutter="32">
-              <el-col v-for="i in 3" :key="i" :lg="8" :sm="24">
-                <el-skeleton-item variant="image" style="height: 300px; border-radius: 14px;" />
-              </el-col>
-            </el-row>
-          </template>
-        </el-skeleton>
-      </template>
-      <template v-else>
-        <panel-group :data-info="dashboardList" @handleSetLineChartData="handleSetLineChartData" />
-        <!-- 图表看板（真实数据） -->
-        <el-row :gutter="32">
-          <el-col :xs="24" :sm="24" :lg="8">
-            <div class="chart-wrapper">
-              <dashboard-radar :list="dashboardList" />
-            </div>
-          </el-col>
-          <el-col :xs="24" :sm="24" :lg="8">
-            <div class="chart-wrapper">
-              <dashboard-pie :list="dashboardList" />
-            </div>
-          </el-col>
-          <el-col :xs="24" :sm="24" :lg="8">
-            <div class="chart-wrapper">
-              <dashboard-bar :list="dashboardList" />
-            </div>
-          </el-col>
-        </el-row>
-      </template>
-      <!-- 最近操作 -->
-      <el-row class="recent-ops-row">
-        <el-col :span="24">
-          <div class="chart-wrapper">
-            <div class="recent-ops-header">
-              <span>最近操作</span>
-              <router-link to="/log/operation-log" class="link-more">查看全部</router-link>
-            </div>
-            <el-table v-loading="recentOpsLoading" :data="recentOps" size="small" stripe style="width: 100%">
-              <el-table-column show-overflow-tooltip prop="username" label="请求人" width="100" />
+    <!-- 未连接提示 -->
+    <div v-if="!ldapStatus.connected" class="ldap-banner">
+      <el-icon class="ldap-banner__icon"><WarningFilled /></el-icon>
+      <div class="ldap-banner__text">
+        <div class="ldap-banner__title">LDAP 尚未连接</div>
+        <div class="ldap-banner__desc">配置目录服务（OpenLDAP / AD）后即可同步并管理用户与组织。</div>
+      </div>
+      <el-button type="primary" size="small" @click="goConfig">去配置</el-button>
+    </div>
+
+    <!-- 首屏骨架屏 -->
+    <template v-if="loading">
+      <el-skeleton animated :throttle="300">
+        <template #template>
+          <el-row :gutter="16" style="margin-bottom: 20px;">
+            <el-col v-for="i in 6" :key="i" :xs="12" :sm="8" :lg="4">
+              <el-skeleton-item variant="image" style="height: 116px; border-radius: 16px;" />
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" style="margin-bottom: 20px;">
+            <el-col :lg="8" :xs="24"><el-skeleton-item variant="image" style="height: 340px; border-radius: 16px;" /></el-col>
+            <el-col :lg="16" :xs="24"><el-skeleton-item variant="image" style="height: 340px; border-radius: 16px;" /></el-col>
+          </el-row>
+        </template>
+      </el-skeleton>
+    </template>
+
+    <template v-else>
+      <!-- 指标卡 -->
+      <panel-group :data-info="dashboardList" @handleSetLineChartData="handleSetLineChartData" />
+
+      <!-- 图表区 -->
+      <el-row :gutter="20" class="dash-row">
+        <el-col :xs="24" :lg="8">
+          <section class="dash-card">
+            <header class="dash-card__head">
+              <div class="dash-card__titles">
+                <h3 class="dash-card__title">目录构成</h3>
+                <span class="dash-card__cap">各模块数据占比</span>
+              </div>
+            </header>
+            <dashboard-pie :list="dashboardList" />
+          </section>
+        </el-col>
+        <el-col :xs="24" :lg="16">
+          <section class="dash-card">
+            <header class="dash-card__head">
+              <div class="dash-card__titles">
+                <h3 class="dash-card__title">各模块数量</h3>
+                <span class="dash-card__cap">按数量排行</span>
+              </div>
+            </header>
+            <dashboard-bar :list="dashboardList" />
+          </section>
+        </el-col>
+      </el-row>
+
+      <el-row :gutter="20" class="dash-row">
+        <el-col :xs="24" :lg="8">
+          <section class="dash-card">
+            <header class="dash-card__head">
+              <div class="dash-card__titles">
+                <h3 class="dash-card__title">数据分布</h3>
+                <span class="dash-card__cap">各维度雷达视图</span>
+              </div>
+            </header>
+            <dashboard-radar :list="dashboardList" />
+          </section>
+        </el-col>
+        <el-col :xs="24" :lg="16">
+          <section class="dash-card">
+            <header class="dash-card__head">
+              <div class="dash-card__titles">
+                <h3 class="dash-card__title">最近操作</h3>
+                <span class="dash-card__cap">最新审计日志</span>
+              </div>
+              <router-link to="/log/operation-log" class="dash-card__more">查看全部</router-link>
+            </header>
+            <el-table v-loading="recentOpsLoading" :data="recentOps" size="small" style="width: 100%">
+              <el-table-column show-overflow-tooltip prop="username" label="请求人" width="96" />
               <el-table-column show-overflow-tooltip prop="path" label="请求路径" min-width="180" />
-              <el-table-column prop="method" label="方式" width="70" align="center">
+              <el-table-column prop="method" label="方式" width="76" align="center">
                 <template #default="scope">
-                  <el-tag v-if="scope.row.method === 'GET'" type="success" size="small">GET</el-tag>
-                  <el-tag v-else-if="scope.row.method === 'POST'" type="warning" size="small">POST</el-tag>
-                  <el-tag v-else-if="scope.row.method === 'PUT'" type="primary" size="small">PUT</el-tag>
-                  <el-tag v-else-if="scope.row.method === 'DELETE'" type="danger" size="small">DEL</el-tag>
-                  <el-tag v-else size="small">{{ scope.row.method }}</el-tag>
+                  <el-tag v-if="scope.row.method === 'GET'" type="success" size="small" effect="light">GET</el-tag>
+                  <el-tag v-else-if="scope.row.method === 'POST'" type="warning" size="small" effect="light">POST</el-tag>
+                  <el-tag v-else-if="scope.row.method === 'PUT'" type="primary" size="small" effect="light">PUT</el-tag>
+                  <el-tag v-else-if="scope.row.method === 'DELETE'" type="danger" size="small" effect="light">DEL</el-tag>
+                  <el-tag v-else size="small" effect="light">{{ scope.row.method }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="status" label="状态" width="70" align="center">
+              <el-table-column prop="status" label="状态" width="72" align="center">
                 <template #default="scope">
-                  <el-tag :type="scope.row.status >= 200 && scope.row.status < 300 ? 'success' : 'danger'" size="small">{{ scope.row.status }}</el-tag>
+                  <el-tag :type="scope.row.status >= 200 && scope.row.status < 300 ? 'success' : 'danger'" size="small" effect="light">{{ scope.row.status }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column show-overflow-tooltip prop="startTime" label="时间" width="160" />
+              <template #empty>暂无操作记录</template>
             </el-table>
-          </div>
+          </section>
         </el-col>
       </el-row>
-    </div>
+    </template>
   </div>
 </template>
 
 <script>
-// import GithubCorner from '@/components/GithubCorner'
 import PanelGroup from './components/PanelGroup'
 import DashboardRadar from './components/DashboardRadar'
 import DashboardPie from './components/DashboardPie'
@@ -131,22 +154,27 @@ export default {
     this.fetchLDAPStatus()
     this.fetchRecentOps()
   },
-  //普通用户登录后跳转到个人中心
- beforeRouteEnter(to, from, next) {
+  // 普通用户登录后跳转到个人中心
+  beforeRouteEnter(to, from, next) {
     next(vm => {
-      const roles = vm.$store.getters.roles;
+      const roles = vm.$store.getters.roles
       if (roles.length > 0 && roles.includes('普通用户')) {
-        vm.$router.push('/profile/index');
+        vm.$router.push('/profile/index')
       }
-    });
+    })
   },
-
-   methods: {
+  methods: {
     handleSetLineChartData() {
       // 保留事件以兼容 PanelGroup 点击
     },
     goConfig() {
       this.$router.push('/settings/directory')
+    },
+    refreshAll() {
+      this.loading = true
+      this.fetchDashboard()
+      this.fetchLDAPStatus()
+      this.fetchRecentOps()
     },
     async fetchDashboard() {
       try {
@@ -171,7 +199,7 @@ export default {
     async fetchRecentOps() {
       this.recentOpsLoading = true
       try {
-        const res = await getOperationLogs({ pageNum: 1, pageSize: 10 })
+        const res = await getOperationLogs({ pageNum: 1, pageSize: 8 })
         this.recentOps = (res.data && res.data.logs) ? res.data.logs : []
       } catch (_) {
         this.recentOps = []
@@ -183,106 +211,109 @@ export default {
 }
 </script>
 
-<style rel="stylesheet/scss" lang="scss" scoped>
+<style lang="scss" scoped>
 @import "@/styles/variables.scss";
 
-.dashboard-container {
-  padding: 0;
-}
+.dashboard { padding: 0; }
 
-.page-header {
-  margin-bottom: 24px;
+/* 页头 */
+.dash-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
 
-  .page-title {
-    margin: 0 0 8px 0;
+  &__title {
+    margin: 0 0 6px;
     font-size: 22px;
     font-weight: 700;
-    color: $slate800;
+    color: $slate900;
     letter-spacing: -0.02em;
   }
+  &__desc { margin: 0; font-size: 14px; color: $slate500; }
+  &__right { display: flex; align-items: center; gap: 12px; }
+}
 
-  .page-desc {
-    margin: 0;
-    font-size: 14px;
-    color: $slate500;
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid;
+
+  &__dot { width: 7px; height: 7px; border-radius: 50%; }
+  &.is-ok {
+    color: #15803d; background: #f0fdf4; border-color: #bbf7d0;
+    .status-pill__dot { background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18); }
+  }
+  &.is-warn {
+    color: #b45309; background: #fffbeb; border-color: #fde68a;
+    .status-pill__dot { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18); }
   }
 }
 
+/* 未连接提示 */
 .ldap-banner {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 18px;
-  margin-bottom: 24px;
+  padding: 13px 18px;
+  margin-bottom: 22px;
   border-radius: 12px;
-  border: 1px solid;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
 
-  &__icon { font-size: 22px; flex: none; }
+  &__icon { font-size: 22px; flex: none; color: $themeWarning; }
   &__text { flex: 1; min-width: 0; }
-  &__title { font-size: 14px; font-weight: 600; }
-  &__desc { font-size: 13px; margin-top: 2px; }
-
-  &--ok {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-    .ldap-banner__icon { color: $themeSuccess; }
-    .ldap-banner__title { color: #166534; }
-    .ldap-banner__desc { color: #15803d; }
-  }
-  &--warn {
-    background: #fffbeb;
-    border-color: #fde68a;
-    .ldap-banner__icon { color: $themeWarning; }
-    .ldap-banner__title { color: #92400e; }
-    .ldap-banner__desc { color: #b45309; }
-  }
+  &__title { font-size: 14px; font-weight: 600; color: #92400e; }
+  &__desc { font-size: 13px; margin-top: 2px; color: #b45309; }
 }
 
-.recent-ops-row {
-  margin-top: 0;
-}
+/* 卡片 */
+.dash-row { margin-bottom: 20px; }
+.dash-card {
+  height: 100%;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid $borderColor;
+  box-shadow: $cardShadow;
+  padding: 20px 22px 18px;
+  transition: box-shadow $transitionBase;
 
-.recent-ops-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  font-weight: 600;
-  font-size: 16px;
-  color: $slate800;
+  &:hover { box-shadow: $cardShadowHover; }
 
-  .link-more {
-    font-size: 14px;
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  &__title { margin: 0; font-size: 16px; font-weight: 600; color: $slate800; letter-spacing: -0.01em; }
+  &__cap { display: block; margin-top: 3px; font-size: 12px; color: $slate400; }
+  &__more {
+    flex: none;
+    font-size: 13px;
     font-weight: 500;
     color: $themePrimary;
     text-decoration: none;
     &:hover { color: $themePrimaryDark; }
   }
-}
 
-.dashboard-editor-container {
-  padding: 0;
-  position: relative;
-  min-height: 100%;
-
-  .chart-wrapper {
-    background: #fff;
-    padding: 24px;
-    margin-bottom: 24px;
-    border-radius: $cardRadius;
-    border: 1px solid $borderColor;
-    box-shadow: $cardShadow;
-    transition: box-shadow $transitionBase;
-
-    &:hover {
-      box-shadow: $cardShadowHover;
-    }
-  }
+  :deep(.el-table) { --el-table-border-color: #f1f5f9; }
+  :deep(.el-table th.el-table__cell) { background: #f8fafc; color: $slate500; font-weight: 600; }
 }
 
 @media (max-width: 1024px) {
-  .chart-wrapper {
-    padding: 16px;
-  }
+  .dash-card { padding: 16px; }
+  .dash-card :deep(.dashboard-bar-chart),
+  .dash-card :deep(.dashboard-pie-chart),
+  .dash-card :deep(.dashboard-radar-chart) { height: 260px !important; }
 }
 </style>
