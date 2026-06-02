@@ -4,7 +4,6 @@
 
 <script>
 import * as echarts from 'echarts'
-import 'echarts/theme/macarons'
 import { debounce } from '@/utils'
 
 export default {
@@ -14,7 +13,7 @@ export default {
       type: Array,
       default: () => []
     },
-    height: { type: String, default: '300px' },
+    height: { type: String, default: '280px' },
     width: { type: String, default: '100%' }
   },
   data() {
@@ -29,7 +28,7 @@ export default {
     }
   },
   mounted() {
-    this.chart = echarts.init(this.$el, 'macarons')
+    this.chart = echarts.init(this.$el)
     this.updateChart()
     this.__resizeHandler = debounce(() => {
       if (this.chart) this.chart.resize()
@@ -55,18 +54,26 @@ export default {
       }))
       const value = this.list.map(item => Number(item.dataCount) || 0)
       this.chart.setOption({
-        title: { text: '数据分布', left: 'center', top: 8, textStyle: { fontSize: 14 } },
         tooltip: { trigger: 'item' },
         radar: {
-          radius: '62%',
-          center: ['50%', '48%'],
-          indicator
+          radius: '66%',
+          center: ['50%', '52%'],
+          indicator,
+          axisName: { color: '#64748b', fontSize: 12 },
+          splitNumber: 4,
+          splitLine: { lineStyle: { color: '#e2e8f0' } },
+          splitArea: { areaStyle: { color: ['rgba(99,102,241,0.03)', 'rgba(99,102,241,0.07)'] } },
+          axisLine: { lineStyle: { color: '#e2e8f0' } }
         },
         series: [{
           name: '数量',
           type: 'radar',
           data: [{ value, name: '当前' }],
-          areaStyle: { opacity: 0.3 }
+          symbol: 'circle',
+          symbolSize: 5,
+          lineStyle: { color: '#6366f1', width: 2 },
+          itemStyle: { color: '#6366f1' },
+          areaStyle: { color: 'rgba(99,102,241,0.18)' }
         }]
       })
     }

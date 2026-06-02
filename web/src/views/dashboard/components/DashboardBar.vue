@@ -4,8 +4,9 @@
 
 <script>
 import * as echarts from 'echarts'
-import 'echarts/theme/macarons'
 import { debounce } from '@/utils'
+
+const BRAND = ['#6366f1', '#22d3ee', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e']
 
 export default {
   name: 'DashboardBar',
@@ -14,7 +15,7 @@ export default {
       type: Array,
       default: () => []
     },
-    height: { type: String, default: '300px' },
+    height: { type: String, default: '280px' },
     width: { type: String, default: '100%' }
   },
   data() {
@@ -29,7 +30,7 @@ export default {
     }
   },
   mounted() {
-    this.chart = echarts.init(this.$el, 'macarons')
+    this.chart = echarts.init(this.$el)
     this.updateChart()
     this.__resizeHandler = debounce(() => {
       if (this.chart) this.chart.resize()
@@ -46,24 +47,43 @@ export default {
   methods: {
     updateChart() {
       if (!this.chart || !Array.isArray(this.list) || this.list.length === 0) return
-      const names = this.list.map(item => item.dataName || item.dataType)
-      const values = this.list.map(item => Number(item.dataCount) || 0)
-      const colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272']
+      // 各模块数量跨度大（如日志 >> 角色），用「横向排行榜」呈现：
+      // 按数量升序（ECharts 类目轴自下而上 → 最大在顶部），barMinHeight 保证小值也有可见短条，
+      // 颜色按模块身份固定（与环形图一致），条末显示真实数值。
+      const items = this.list
+        .map((item, i) => ({
+          name: item.dataName || item.dataType,
+          value: Number(item.dataCount) || 0,
+          color: BRAND[i % BRAND.length]
+        }))
+        .sort((a, b) => a.value - b.value)
       this.chart.setOption({
-        title: { text: '各模块数量', left: 'center', top: 8, textStyle: { fontSize: 14 } },
-        tooltip: { trigger: 'axis' },
-        grid: { top: 40, left: '3%', right: '3%', bottom: '12%', containLabel: true },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        grid: { top: 8, left: 4, right: 44, bottom: 4, containLabel: true },
         xAxis: {
-          type: 'category',
-          data: names,
-          axisLabel: { interval: 0, rotate: names.length > 4 ? 20 : 0 }
+          type: 'value',
+          axisLine: { show: false },
+          axisTick: { show: false },
+          splitLine: { lineStyle: { color: '#f1f5f9' } },
+          axisLabel: { color: '#94a3b8' }
         },
-        yAxis: { type: 'value', axisTick: { show: false } },
+        yAxis: {
+          type: 'category',
+          data: items.map(i => i.name),
+          axisTick: { show: false },
+          axisLine: { lineStyle: { color: '#e2e8f0' } },
+          axisLabel: { color: '#475569', fontSize: 12, fontWeight: 500 }
+        },
         series: [{
           name: '数量',
           type: 'bar',
-          barWidth: '56%',
-          data: values.map((v, i) => ({ value: v, itemStyle: { color: colors[i % colors.length] } }))
+          barWidth: 14,
+          barMinHeight: 6,
+          label: { show: true, position: 'right', color: '#475569', fontSize: 11, fontWeight: 600 },
+          data: items.map(i => ({
+            value: i.value,
+            itemStyle: { color: i.color, borderRadius: [0, 6, 6, 0] }
+          }))
         }]
       })
     }
