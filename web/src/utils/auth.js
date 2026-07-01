@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie'
 
-const TokenKey = 'gowebmini-Token'
+const TokenKey = 'ldap-admin-token'
 
 export function getToken() {
   return Cookies.get(TokenKey)

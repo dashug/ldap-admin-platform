@@ -228,9 +228,6 @@ export default {
       this.$refs.password.focus()
     }
   },
-  destroyed() {
-    // window.removeEventListener('storage', this.afterQRScan)
-  },
   methods: {
     // ----- 吉祥物互动 -----
     onUserFocus() {
