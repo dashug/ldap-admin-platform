@@ -120,14 +120,11 @@ func (d FeiShuLogic) SyncFeiShuUsers(c *gin.Context, req any) (data any, rspErro
 		common.Log.Errorf("SyncFeiShuUsers: %s", errMsg)
 		return nil, tools.NewOperationError(errors.New(errMsg))
 	}
-	// 2.遍历用户，开始写入
+	// 2.遍历用户，开始写入（单个用户失败时跳过并继续，避免一条坏数据阻断整批同步）
 	for i, staff := range staffs {
-		// 入库
-		err = d.AddUsers(staff)
-		if err != nil {
-			errMsg := fmt.Sprintf("写入用户[%s]失败：%s", staff.Username, err.Error())
-			common.Log.Errorf("SyncFeiShuUsers: %s", errMsg)
-			return nil, tools.NewOperationError(errors.New(errMsg))
+		if err = d.AddUsers(staff); err != nil {
+			common.Log.Errorf("SyncFeiShuUsers: 写入用户[%s]失败(跳过继续)：%s", staff.Username, err.Error())
+			continue
 		}
 		common.Log.Infof("SyncFeiShuUsers: 成功同步用户[%s] (%d/%d)", staff.Username, i+1, len(staffs))
 	}

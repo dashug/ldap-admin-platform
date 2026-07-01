@@ -108,13 +108,13 @@ func (s GroupService) Find(filter map[string]any, data *model.Group, args ...any
 // Exist 判断资源是否存在
 func (s GroupService) Exist(filter map[string]any) bool {
 	var dataObj model.Group
-	err := common.DB.Debug().Order("created_at DESC").Where(filter).First(&dataObj).Error
+	err := common.DB.Order("created_at DESC").Where(filter).First(&dataObj).Error
 	return !errors.Is(err, gorm.ErrRecordNotFound)
 }
 
 // Delete 批量删除
 func (s GroupService) Delete(groups []*model.Group) error {
-	return common.DB.Debug().Select("Users").Unscoped().Delete(&groups).Error
+	return common.DB.Select("Users").Unscoped().Delete(&groups).Error
 }
 
 // GetApisById 根据接口ID获取接口列表

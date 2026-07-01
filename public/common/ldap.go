@@ -3,7 +3,6 @@ package common
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"net"
 	"sync"
@@ -106,7 +105,7 @@ func (lcp *LdapConnPool) GetConnection() (*ldap.Conn, error) {
 	}
 
 	// 当现有连接池为空时，并且当前超过最大连接限制
-	if lcp.maxOpen != 0 && lcp.openConn > lcp.maxOpen {
+	if lcp.maxOpen != 0 && lcp.openConn >= lcp.maxOpen {
 		// 创建一个等待队列
 		req := make(chan *ldap.Conn, 1)
 		reqKey := lcp.nextRequestKeyLocked()
@@ -123,7 +122,6 @@ func (lcp *LdapConnPool) GetConnection() (*ldap.Conn, error) {
 }
 
 func (lcp *LdapConnPool) PutConnection(conn *ldap.Conn) {
-	log.Println("放回了一个 LDAP 连接")
 	lcp.mu.Lock()
 	defer lcp.mu.Unlock()
 

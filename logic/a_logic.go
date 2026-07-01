@@ -152,6 +152,11 @@ func CommonAddUser(user *model.User, groups []*model.Group) error {
 			common.SendWebhook(common.EventUserCreated, common.UserWebhookData{ID: user.ID, Username: user.Username, Nickname: user.Nickname, Mail: user.Mail, Mobile: user.Mobile, UserDN: user.UserDN, Status: user.Status})
 			return nil
 		}
+		// 双写补偿：用户已写入 MySQL 但 LDAP 写入失败，标记为「未同步」(SyncState=2)，
+		// 以便后续差异检测/手动重新同步，而不是留下 MySQL 有、LDAP 无的静默不一致。
+		if user.ID != 0 {
+			_ = common.DB.Model(&model.User{}).Where("id = ?", user.ID).Update("sync_state", 2).Error
+		}
 		return tools.NewLdapError(fmt.Errorf("%s", "AddUser向LDAP创建用户失败："+err.Error()))
 	}
 
@@ -382,7 +387,9 @@ func ConvertDeptData(flag string, remoteData []map[string]any) (groups []*model.
 // ConvertUserData 将用户信息转成本地结构体
 func ConvertUserData(flag string, remoteData []map[string]any) (users []*model.User, err error) {
 	for _, staff := range remoteData {
-		groupIds, err := isql.Group.DeptIdsToGroupIds(staff["department_ids"].([]string))
+		// department_ids 可能缺失或类型不符，用 comma-ok 断言避免直接 panic（原代码强制断言会崩）
+		deptIds, _ := staff["department_ids"].([]string)
+		groupIds, err := isql.Group.DeptIdsToGroupIds(deptIds)
 		if err != nil {
 			return nil, tools.NewMySqlError(fmt.Errorf("将部门ids转换为内部部门id失败：%s", err.Error()))
 		}

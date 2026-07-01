@@ -3,6 +3,7 @@ package isql
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,20 @@ import (
 )
 
 type UserService struct{}
+
+// deptIDFilter 为「按部门ID过滤用户」构造跨库(SQLite/MySQL)的 SQL 片段与参数。
+// User.DepartmentId 是逗号分隔字符串(如 "1,3,5")，需按整段 token 匹配，避免 "1" 命中 "12"；
+// 也修复原实现把 []uint 直接用于 "department_id = ?" 导致的多部门查询失效。
+func deptIDFilter(deptIds []uint) (string, []any) {
+	conds := make([]string, 0, len(deptIds))
+	args := make([]any, 0, len(deptIds)*4)
+	for _, id := range deptIds {
+		s := strconv.FormatUint(uint64(id), 10)
+		conds = append(conds, "(department_id = ? OR department_id LIKE ? OR department_id LIKE ? OR department_id LIKE ?)")
+		args = append(args, s, s+",%", "%,"+s, "%,"+s+",%")
+	}
+	return strings.Join(conds, " OR "), args
+}
 
 // 当前用户信息缓存，避免频繁获取数据库
 var userInfoCache = cache.New(24*time.Hour, 48*time.Hour)
@@ -49,7 +64,8 @@ func (s UserService) List(req *request.UserListReq) ([]*model.User, error) {
 	}
 	departmentId := req.DepartmentId
 	if len(departmentId) > 0 {
-		db = db.Where("department_id = ?", departmentId)
+		cond, args := deptIDFilter(departmentId)
+		db = db.Where(cond, args...)
 	}
 	givenName := strings.TrimSpace(req.GivenName)
 	if givenName != "" {
@@ -65,7 +81,7 @@ func (s UserService) List(req *request.UserListReq) ([]*model.User, error) {
 	}
 
 	pageReq := tools.NewPageOption(req.PageNum, req.PageSize)
-	err := db.Offset(pageReq.PageNum).Limit(pageReq.PageSize).Preload("Roles").Find(&list).Debug().Error
+	err := db.Offset(pageReq.PageNum).Limit(pageReq.PageSize).Preload("Roles").Find(&list).Error
 	return list, err
 }
 
@@ -88,7 +104,8 @@ func (s UserService) ListCount(req *request.UserListReq) (int64, error) {
 	}
 	departmentId := req.DepartmentId
 	if len(departmentId) > 0 {
-		db = db.Where("department_id = ?", departmentId)
+		cond, args := deptIDFilter(departmentId)
+		db = db.Where(cond, args...)
 	}
 	givenName := strings.TrimSpace(req.GivenName)
 	if givenName != "" {
@@ -219,7 +236,7 @@ func (s UserService) Delete(ids []uint) error {
 		users = append(users, *user)
 	}
 
-	err := common.DB.Debug().Select("Roles").Unscoped().Delete(&users).Error
+	err := common.DB.Select("Roles").Unscoped().Delete(&users).Error
 	if err != nil {
 		return err
 	} else {
@@ -230,7 +247,7 @@ func (s UserService) Delete(ids []uint) error {
 	}
 
 	// 删除用户在group的关联
-	err = common.DB.Debug().Exec("DELETE FROM group_users WHERE user_id IN (?)", ids).Error
+	err = common.DB.Exec("DELETE FROM group_users WHERE user_id IN (?)", ids).Error
 	if err != nil {
 		return err
 	}
