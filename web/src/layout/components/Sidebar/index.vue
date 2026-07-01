@@ -7,7 +7,7 @@
     </div>
 
     <!-- 搜索 / ⌘K -->
-    <button class="nav__search" @click="openCmdk">
+    <button type="button" class="nav__search" aria-label="搜索（⌘K）" @click="openCmdk">
       <el-icon><Search /></el-icon>
       <template v-if="!isCollapse">
         <span class="nav__search-text">搜索…</span>
@@ -25,6 +25,7 @@
           :to="it.path"
           class="nav__item"
           :class="{ 'is-active': isActive(it.path) }"
+          :aria-current="isActive(it.path) ? 'page' : undefined"
           :title="it.title"
         >
           <el-icon class="nav__icon"><component :is="iconFor(it.title)" /></el-icon>
@@ -61,7 +62,7 @@
     <!-- 用户 -->
     <el-dropdown class="nav__user" trigger="click" placement="top-start" @command="onUserCommand">
       <div class="nav__user-row">
-        <img :src="avatar" class="nav__avatar">
+        <img :src="avatar" alt="用户头像" class="nav__avatar">
         <template v-if="!isCollapse">
           <div class="nav__user-meta">
             <div class="nav__user-name">{{ name || 'admin' }}</div>
@@ -285,6 +286,11 @@ export default {
     font-weight: $fontWeightSemibold;
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28), inset 0 0 0 1px rgba(129, 140, 248, 0.30);
     .nav__icon { color: #a5b4fc; }
+  }
+  // 键盘可达性：深色导航项聚焦时给出清晰焦点环
+  &:focus-visible {
+    outline: 2px solid #a5b4fc;
+    outline-offset: -2px;
   }
 }
 

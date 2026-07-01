@@ -1,7 +1,7 @@
 <template>
   <el-row :gutter="16" class="panel-group">
     <el-col v-for="(item, i) in listData" :key="item.dataType" :xs="12" :sm="8" :lg="4" class="panel-col">
-      <router-link :to="toPath(item.path)" class="stat" :style="accentVars(i)">
+      <router-link :to="toPath(item.path)" class="stat" :style="accentVars(i)" :aria-label="`${item.dataName}：${item.dataCount}，点击查看详情`">
         <span class="stat__glow" aria-hidden="true" />
         <div class="stat__top">
           <span class="stat__icon"><svg-icon :icon-class="item.icon" class-name="stat__svg" /></span>
@@ -152,6 +152,12 @@ export default {
     border-color: color-mix(in srgb, var(--accent) 35%, transparent);
     .stat__glow { transform: scale(1.25); opacity: 1; }
     .stat__arrow { opacity: 1; transform: translateX(0); }
+  }
+  // 键盘可达性：为聚焦的指标卡提供清晰焦点环
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    box-shadow: $cardShadowHover;
   }
 }
 
