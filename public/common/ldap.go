@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -59,6 +60,41 @@ func InitLDAP() {
 	)
 
 	Log.Info("初始化ldap完成! dsn: ", showDsn)
+}
+
+// InitLDAPIfConfigured 在配置了 LDAP 地址时尝试初始化连接池。
+// 与直接 InitLDAP 不同：连接失败不 panic，而是记录告警并保持「未连接」状态，
+// 使平台在 LDAP 不可用时仍能以「仅数据库」模式启动（logic 层据 ErrLDAPDisabled 自动降级，跳过目录写入）。
+// 由此 LDAP 变为「配置驱动」——填好 ldap.url/管理员凭据即启用目录双写，无需再改源码重新编译。
+func InitLDAPIfConfigured() {
+	if config.Conf.Ldap == nil || strings.TrimSpace(config.Conf.Ldap.Url) == "" {
+		Log.Info("未配置 ldap.url，跳过 LDAP 初始化（仅数据库模式）")
+		return
+	}
+	if err := tryInitLDAP(); err != nil {
+		Log.Warnf("LDAP 初始化失败，降级为「仅数据库」模式（目录写入将被跳过）: %v", err)
+	}
+}
+
+func tryInitLDAP() error {
+	conn, err := ldap.DialURL(config.Conf.Ldap.Url, ldap.DialWithDialer(&net.Dialer{Timeout: 5 * time.Second}))
+	if err != nil {
+		return err
+	}
+	if err = conn.Bind(config.Conf.Ldap.AdminDN, config.Conf.Ldap.AdminPass); err != nil {
+		conn.Close()
+		return err
+	}
+	ldapPool = &LdapConnPool{
+		conns:    make([]*ldap.Conn, 0),
+		reqConns: make(map[uint64]chan *ldap.Conn),
+		openConn: 0,
+		maxOpen:  config.Conf.Ldap.MaxConn,
+	}
+	PutLADPConn(conn)
+	ldapInit = true
+	Log.Infof("初始化 LDAP 完成! dsn: %s:******@%s", config.Conf.Ldap.AdminDN, config.Conf.Ldap.Url)
+	return nil
 }
 
 // GetLDAPConn 获取 LDAP 连接；若 LDAP 未初始化则返回 ErrLDAPDisabled

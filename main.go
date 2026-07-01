@@ -48,8 +48,9 @@ func main() {
 	// 初始化数据库(mysql)
 	common.InitDB()
 
-	// 初始化ldap连接 (暂时注释，等配置好LDAP后再启用)
-	// common.InitLDAP()
+	// 初始化 LDAP 连接：配置了 ldap.url 且可达时启用目录双写；
+	// 不可达则告警并降级为「仅数据库」模式（不阻断启动，无需再改源码重新编译）
+	common.InitLDAPIfConfigured()
 
 	// 初始化casbin策略管理器
 	common.InitCasbinEnforcer()

@@ -405,12 +405,18 @@ func ConvertUserData(flag string, remoteData []map[string]any) (users []*model.U
 	return
 }
 
+// autoSyncEnabled 是否启用了「统一定时自动同步」（sync_scheduler）。
+func autoSyncEnabled() bool {
+	return config.Conf.System != nil && config.Conf.System.AutoSyncEnabled
+}
+
 func InitCron() {
 	c := cron.New(cron.WithSeconds())
 	// 绑定全局 cron 实例并按配置注册「统一定时自动同步」任务（见 sync_scheduler.go）
 	bindAutoSyncCron(c)
 
-	if config.Conf.DingTalk.EnableSync {
+	// 旧版「逐平台」定时同步仅在未启用「统一定时自动同步」时注册，避免与 auto-sync 重复触发同一数据源
+	if config.Conf.DingTalk.EnableSync && !autoSyncEnabled() {
 		//启动定时任务
 		_, err := c.AddFunc(config.Conf.DingTalk.DeptSyncTime, func() {
 			DingTalk.SyncDingTalkDepts(nil, nil)
@@ -426,7 +432,7 @@ func InitCron() {
 			common.Log.Errorf("启动同步用户的定时任务失败: %v", err)
 		}
 	}
-	if config.Conf.WeCom.EnableSync {
+	if config.Conf.WeCom.EnableSync && !autoSyncEnabled() {
 		_, err := c.AddFunc(config.Conf.WeCom.DeptSyncTime, func() {
 			WeCom.SyncWeComDepts(nil, nil)
 		})
@@ -441,7 +447,7 @@ func InitCron() {
 			common.Log.Errorf("启动同步用户的定时任务失败: %v", err)
 		}
 	}
-	if config.Conf.FeiShu.EnableSync {
+	if config.Conf.FeiShu.EnableSync && !autoSyncEnabled() {
 		_, err := c.AddFunc(config.Conf.FeiShu.DeptSyncTime, func() {
 			FeiShu.SyncFeiShuDepts(nil, nil)
 		})
