@@ -36,11 +36,15 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build \
 # ---------- 3) 运行时（极简） ----------
 FROM alpine:3.20
 WORKDIR /app
-RUN apk add --no-cache ca-certificates tzdata && mkdir -p /app/data
+RUN apk add --no-cache ca-certificates tzdata && mkdir -p /app/data \
+    && addgroup -S app && adduser -S -G app app
 ENV TZ=Asia/Shanghai
 COPY --from=server /out/go-ldap-admin ./go-ldap-admin
 # 镜像内置一份【纯占位】的默认配置模板；正式部署务必用卷挂载覆盖或用环境变量注入真实配置/密钥
 # （见 docker-compose.yml 与 README）。绝不把含真实密钥的 config.yml 烤进镜像。
 COPY config.example.yml ./config.yml
+# 以非 root 用户运行（容器逃逸加固，trivy DS-0002）；app 需可写 /app/data(sqlite/日志/RSA 私钥)
+RUN chown -R app:app /app
+USER app
 EXPOSE 8888
 CMD ["./go-ldap-admin"]
