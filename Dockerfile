@@ -39,7 +39,8 @@ WORKDIR /app
 RUN apk add --no-cache ca-certificates tzdata && mkdir -p /app/data
 ENV TZ=Asia/Shanghai
 COPY --from=server /out/go-ldap-admin ./go-ldap-admin
-# 镜像内置一份默认 config.yml；正式部署建议用卷挂载覆盖（见 docker-compose.yml）
-COPY config.yml ./config.yml
+# 镜像内置一份【纯占位】的默认配置模板；正式部署务必用卷挂载覆盖或用环境变量注入真实配置/密钥
+# （见 docker-compose.yml 与 README）。绝不把含真实密钥的 config.yml 烤进镜像。
+COPY config.example.yml ./config.yml
 EXPOSE 8888
 CMD ["./go-ldap-admin"]

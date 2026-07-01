@@ -34,3 +34,11 @@ dist
 重新上传到GitHub*.sh
 提交并推送到GitHub*.sh
 rewrite-git-author.sh
+
+# 安全：RSA 私钥不入库（历史遗留 + 运行期自动生成），登录加解密密钥改为运行期注入/生成
+config/*.pem
+data/rsa_private.pem
+
+# 安全：运行配置不入库（可能含真实密钥），改用 config.example.yml 作模板 + 环境变量注入。
+# 首次运行请 `cp config.example.yml config.yml`（缺失时程序会自动回退到模板启动）
+config.yml

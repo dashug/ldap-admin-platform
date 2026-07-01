@@ -3,6 +3,7 @@ package isql
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/dashug/ldap-admin-platform/model"
 	"github.com/dashug/ldap-admin-platform/public/common"
@@ -37,10 +38,12 @@ func (s ApiKeyService) Add(name, rawKey string) (*model.ApiKey, error) {
 	if len(prefix) > 20 {
 		prefix = prefix[:20] // 用于查找时缩小范围
 	}
+	enabled := true
 	ak := &model.ApiKey{
 		Name:      name,
 		KeyHash:   hash,
 		KeyPrefix: prefix,
+		Enabled:   &enabled,
 	}
 	if err := common.DB.Create(ak).Error; err != nil {
 		return nil, err
@@ -73,6 +76,15 @@ func (s ApiKeyService) Verify(rawKey string) (*model.ApiKey, bool) {
 	}
 	for _, k := range keys {
 		if tools.VerifyApiKeyHash(k.KeyHash, rawKey) {
+			// 校验是否启用且未过期，停用/过期的 Key 立即失效
+			if !k.IsUsable() {
+				return nil, false
+			}
+			// 最近使用时间尽力更新；异步执行，避免在请求路径上写库（SQLite 单连接下尤其重要）
+			go func(id uint) {
+				now := time.Now()
+				_ = common.DB.Model(&model.ApiKey{}).Where("id = ?", id).Update("last_used_at", &now).Error
+			}(k.ID)
 			return k, true
 		}
 	}

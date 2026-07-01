@@ -3,6 +3,7 @@ package common
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/dashug/ldap-admin-platform/config"
 	"github.com/dashug/ldap-admin-platform/model"
@@ -304,12 +305,16 @@ func InitData() {
 		}
 	}
 
-	// 3.1 当开启初始化数据时，始终将 admin 用户密码与 config 中的 ldap.admin-pass 同步，避免配置改了但库内仍是旧密码导致无法登录
-	var adminUser model.User
-	if err := DB.Where("username = ?", "admin").First(&adminUser).Error; err == nil {
+	// 3.1 admin 密码仅在【首次创建】时写入（见上方 users 切片）。
+	// 出于安全考虑，不再每次启动都用 config 的 ldap.admin-pass 覆盖 admin 密码——
+	// 否则管理员在界面上改过的密码会在每次重启后被重置回配置值（默认可能仍是 123456），既是运维陷阱也是安全隐患。
+	// 如确需强制重置（例如忘记密码做恢复），可临时设置环境变量 RESET_ADMIN_PASSWORD=true 启动一次。
+	if os.Getenv("RESET_ADMIN_PASSWORD") == "true" {
 		newPassHash := tools.HashPassword(config.Conf.Ldap.AdminPass)
 		if err := DB.Model(&model.User{}).Where("username = ?", "admin").Update("password", newPassHash).Error; err != nil {
-			Log.Warnf("同步 admin 密码到配置失败: %v", err)
+			Log.Warnf("重置 admin 密码失败: %v", err)
+		} else {
+			Log.Warn("已按环境变量 RESET_ADMIN_PASSWORD 将 admin 密码重置为配置值")
 		}
 	}
 

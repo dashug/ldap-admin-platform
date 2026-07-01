@@ -3,6 +3,7 @@ package routes
 import (
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/dashug/ldap-admin-platform/controller"
+	"github.com/dashug/ldap-admin-platform/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -55,12 +56,12 @@ func InitBaseRoutes(r *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) gi
 		base.GET("ldapStatus", controller.Base.GetLDAPStatus)   // LDAP 连接状态
 		base.GET("systemInfo", controller.Base.GetSystemInfo)  // 系统信息（版本、运行时长、DB）
 		base.GET("version", controller.Base.GetVersion)       // 获取版本信息
-		// 登录登出刷新token无需鉴权
-		base.POST("/login", authMiddleware.LoginHandler)
+		// 登录登出刷新token无需鉴权；登录/发码/改密为无鉴权敏感端点，额外按 IP 限流防爆破
+		base.POST("/login", middleware.SensitiveRateLimit(), authMiddleware.LoginHandler)
 		base.POST("/logout", authMiddleware.LogoutHandler)
 		base.POST("/refreshToken", authMiddleware.RefreshHandler)
-		base.POST("/sendcode", controller.Base.SendCode)   // 给用户邮箱发送验证码
-		base.POST("/changePwd", controller.Base.ChangePwd) // 修改用户密码
+		base.POST("/sendcode", middleware.SensitiveRateLimit(), controller.Base.SendCode)   // 给用户邮箱发送验证码
+		base.POST("/changePwd", middleware.SensitiveRateLimit(), controller.Base.ChangePwd) // 修改用户密码
 		base.GET("/dashboard", controller.Base.Dashboard)  // 系统首页展示数据
 		base.POST("/directoryConfig", authMiddleware.MiddlewareFunc(), controller.Base.UpdateDirectoryConfig)
 		base.POST("/directoryConfig/test", authMiddleware.MiddlewareFunc(), controller.Base.TestDirectoryConfig)

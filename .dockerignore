@@ -24,4 +24,7 @@ tmp
 # 文档与截图（构建用不到，缩小上下文）
 docs/screenshots
 
-# 注意：保留 config.yml、config/*.pem —— 编译期 go:embed 与运行期需要
+# 安全：含真实密钥的运行配置与历史 RSA 私钥不进构建上下文/镜像。
+# 镜像改为内置 config.example.yml（纯占位），密钥改为运行期注入/自动生成。
+config.yml
+config/*.pem
