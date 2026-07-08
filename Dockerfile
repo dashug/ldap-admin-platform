@@ -17,7 +17,9 @@ COPY web/ ./
 RUN npm run build:prod
 
 # ---------- 2) 编译后端（前端 embed 进单二进制；纯 Go sqlite，CGO=0 交叉编译） ----------
-FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS server
+# Go 构建镜像跟随最新 1.26.x 补丁版：修复 govulncheck 报告的 stdlib 漏洞
+# （crypto/x509、net/textproto、html/template、net/mail，均 go1.26.3/1.26.4 已修）
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS server
 WORKDIR /src
 RUN apk add --no-cache git
 COPY go.mod go.sum ./
