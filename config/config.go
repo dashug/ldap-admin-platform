@@ -68,6 +68,8 @@ func InitConfig() {
 		// 回填运行期 RSA 密钥（viper.Unmarshal 会重建 Conf，需重新赋值）
 		Conf.System.RSAPublicBytes = rsaPub
 		Conf.System.RSAPrivateBytes = rsaPriv
+		// 热更新后重新应用环境变量覆盖，避免 env 注入的密钥被文件里的占位值静默回退
+		applyEnvOverrides()
 	})
 
 	if err != nil {
@@ -147,9 +149,19 @@ func InitConfig() {
 	}
 
 	// 安全/凭据相关配置支持环境变量注入，避免明文写入 config.yml 或被烤进镜像。
-	applyEnvOverride(&Conf.Jwt.Key, "JWT_KEY")
-	applyEnvOverride(&Conf.System.Mode, "SYSTEM_MODE")
-	applyEnvOverride(&Conf.System.WebhookSecret, "WEBHOOK_SECRET")
+	applyEnvOverrides()
+}
+
+// applyEnvOverrides 用环境变量覆盖安全/凭据相关配置项。
+// 在启动装载与 config.yml 热更新回调中都会调用，确保 env 注入的密钥不会被文件里的占位值回退覆盖。
+func applyEnvOverrides() {
+	if Conf.Jwt != nil {
+		applyEnvOverride(&Conf.Jwt.Key, "JWT_KEY")
+	}
+	if Conf.System != nil {
+		applyEnvOverride(&Conf.System.Mode, "SYSTEM_MODE")
+		applyEnvOverride(&Conf.System.WebhookSecret, "WEBHOOK_SECRET")
+	}
 	if Conf.FeiShu != nil {
 		applyEnvOverride(&Conf.FeiShu.AppID, "FEISHU_APP_ID")
 		applyEnvOverride(&Conf.FeiShu.AppSecret, "FEISHU_APP_SECRET")

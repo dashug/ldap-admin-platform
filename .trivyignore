@@ -1,0 +1,7 @@
+# 已缓解/接受的 trivy 发现（附理由）。
+#
+# AVD-DS-0002 "Specify at least 1 USER command":
+#   主 Dockerfile 未用顶层 USER 指令，但进程经 entrypoint(deploy/docker/entrypoint.sh) 的
+#   su-exec 降权为非 root(app, uid 10001) 运行。以 root 入口仅用于先修正 bind mount 的
+#   /app/data 属主再降权，避免非 root 无法写入挂载卷导致启动崩溃。属静态检查无法识别的运行期降权。
+AVD-DS-0002

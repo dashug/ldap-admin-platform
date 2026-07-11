@@ -36,17 +36,23 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build \
     -o /out/go-ldap-admin main.go
 
 # ---------- 3) 运行时（极简） ----------
+# 说明：进程经 entrypoint 的 su-exec 降权为非 root(app,uid 10001) 运行；不用顶层 USER 指令是为了让
+# entrypoint 先以 root 修正 bind mount 的 /app/data 属主再降权。trivy DS-0002 静态检查在此为误报，
+# 已在 .trivyignore 记录豁免。
 FROM alpine:3.20
 WORKDIR /app
-RUN apk add --no-cache ca-certificates tzdata && mkdir -p /app/data \
-    && addgroup -S app && adduser -S -G app app
+RUN apk add --no-cache ca-certificates tzdata su-exec && mkdir -p /app/data \
+    && addgroup -S -g 10001 app && adduser -S -u 10001 -G app app
 ENV TZ=Asia/Shanghai
 COPY --from=server /out/go-ldap-admin ./go-ldap-admin
 # 镜像内置一份【纯占位】的默认配置模板；正式部署务必用卷挂载覆盖或用环境变量注入真实配置/密钥
 # （见 docker-compose.yml 与 README）。绝不把含真实密钥的 config.yml 烤进镜像。
 COPY config.example.yml ./config.yml
-# 以非 root 用户运行（容器逃逸加固，trivy DS-0002）；app 需可写 /app/data(sqlite/日志/RSA 私钥)
-RUN chown -R app:app /app
-USER app
+COPY deploy/docker/entrypoint.sh /entrypoint.sh
+RUN chown -R app:app /app && chmod +x /entrypoint.sh
+# 通过 entrypoint 以 root 入口先把挂载卷 /app/data 补正为 app 属主，再用 su-exec 降权为非 root 的
+# app(uid 10001) 运行主进程：既保留容器逃逸加固（进程实际非 root），又兼容 bind mount——避免非 root
+# 无法写入首次由 Docker 以 root 创建的挂载目录而导致 sqlite/日志/RSA 私钥写入失败、启动崩溃。
 EXPOSE 8888
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["./go-ldap-admin"]

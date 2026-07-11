@@ -75,10 +75,12 @@ func initRSAKeys() error {
 	if block == nil {
 		return fmt.Errorf("RSA 私钥 PEM 解析失败")
 	}
-	priKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	priKey, err := parseRSAPrivateKey(block.Bytes)
 	if err != nil {
-		return fmt.Errorf("RSA 私钥解析失败(需 PKCS1 格式): %w", err)
+		return fmt.Errorf("RSA 私钥解析失败(支持 PKCS1/PKCS8): %w", err)
 	}
+	// 归一化为 PKCS1 PEM 存储：下游 tools.RSADecrypt 仅识别 PKCS1，注入的 PKCS8 私钥经此转换后也能正常解密
+	privBytes = pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priKey)})
 	pubDER, err := x509.MarshalPKIXPublicKey(&priKey.PublicKey)
 	if err != nil {
 		return fmt.Errorf("派生 RSA 公钥失败: %w", err)
@@ -90,6 +92,23 @@ func initRSAKeys() error {
 	Conf.System.RSAPrivateBytes = privBytes
 	Conf.System.RSAPublicBytes = pubBytes
 	return nil
+}
+
+// parseRSAPrivateKey 兼容 PKCS1(BEGIN RSA PRIVATE KEY) 与 PKCS8(BEGIN PRIVATE KEY) 两种私钥编码，
+// 便于运维用 openssl(默认输出 PKCS8) 生成的私钥经 RSA_PRIVATE_KEY(_FILE) 注入而不至启动失败。
+func parseRSAPrivateKey(der []byte) (*rsa.PrivateKey, error) {
+	if k, err := x509.ParsePKCS1PrivateKey(der); err == nil {
+		return k, nil
+	}
+	k, err := x509.ParsePKCS8PrivateKey(der)
+	if err != nil {
+		return nil, err
+	}
+	rk, ok := k.(*rsa.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("私钥不是 RSA 类型")
+	}
+	return rk, nil
 }
 
 func fileExists(p string) bool {

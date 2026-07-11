@@ -151,19 +151,15 @@ func (d FeiShuLogic) SyncFeiShuUsers(c *gin.Context, req any) (data any, rspErro
 				common.Log.Errorf("SyncFeiShuUsers: %s", errMsg)
 				return nil, tools.NewMySqlError(errors.New(errMsg))
 			}
-			// 先从ldap删除用户
-			err = ildap.User.Delete(user.UserDN)
-			if err != nil {
-				errMsg := fmt.Sprintf("在LDAP删除离职用户[%s]失败: %s", user.Username, err.Error())
-				common.Log.Errorf("SyncFeiShuUsers: %s", errMsg)
-				return nil, tools.NewLdapError(errors.New(errMsg))
+			// 先从ldap删除用户（LDAP 未连接时不阻断后续状态更新，与钉钉行为保持一致）
+			if err = ildap.User.Delete(user.UserDN); err != nil && !errors.Is(err, common.ErrLDAPDisabled) {
+				common.Log.Errorf("SyncFeiShuUsers: 在LDAP删除离职用户[%s]失败(跳过): %s", user.Username, err.Error())
+				continue
 			}
-			// 然后更新MySQL中用户状态
-			err = isql.User.ChangeStatus(int(user.ID), 2)
-			if err != nil {
-				errMsg := fmt.Sprintf("在MySQL更新离职用户[%s]状态失败: %s", user.Username, err.Error())
-				common.Log.Errorf("SyncFeiShuUsers: %s", errMsg)
-				return nil, tools.NewMySqlError(errors.New(errMsg))
+			// 然后更新MySQL中用户状态为离职
+			if err = isql.User.ChangeStatus(int(user.ID), 2); err != nil {
+				common.Log.Errorf("SyncFeiShuUsers: 在MySQL更新离职用户[%s]状态失败(跳过): %s", user.Username, err.Error())
+				continue
 			}
 			processedCount++
 			common.Log.Infof("SyncFeiShuUsers: 成功处理离职用户[%s]", user.Username)
