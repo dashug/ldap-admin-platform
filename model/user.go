@@ -10,7 +10,7 @@ type User struct {
 	gorm.Model
 	Username      string     `gorm:"type:varchar(50);not null;unique;comment:'用户名'" json:"username"`                    // 用户名
 	LastLoginAt   *time.Time `gorm:"comment:'最后登录时间'" json:"lastLoginAt"`                                                // 最后登录时间
-	Password      string     `gorm:"size:255;not null;comment:'用户密码'" json:"password"`                                  // 用户密码
+	Password      string     `gorm:"size:255;not null;comment:'用户密码'" json:"-"`                                         // 用户密码：绝不对外序列化（此前 json:"password" 会随用户对象进入 JWT/接口响应，导致密码哈希/可逆密文泄露）
 	Nickname      string  `gorm:"type:varchar(50);comment:'中文名'" json:"nickname"`                                    // 昵称
 	GivenName     string  `gorm:"type:varchar(50);comment:'花名'" json:"givenName"`                                    // 花名，如果有的话，没有的话用昵称占位
 	Mail          string  `gorm:"type:varchar(100);comment:'邮箱'" json:"mail"`                                        // 邮箱

@@ -96,7 +96,7 @@
             name="username"
             type="text"
             tabindex="1"
-            autocomplete="on"
+            autocomplete="username"
             prefix-icon="User"
             @focus="onUserFocus"
             @input="onUserInput"
@@ -114,7 +114,7 @@
               placeholder="请输入密码（至少 6 位）"
               name="password"
               tabindex="2"
-              autocomplete="on"
+              autocomplete="current-password"
               show-password
               prefix-icon="Lock"
               @focus="onPwdFocus"
@@ -227,9 +227,6 @@ export default {
     } else if (this.loginForm.password === '') {
       this.$refs.password.focus()
     }
-  },
-  destroyed() {
-    // window.removeEventListener('storage', this.afterQRScan)
   },
   methods: {
     // ----- 吉祥物互动 -----

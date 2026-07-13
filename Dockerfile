@@ -17,7 +17,9 @@ COPY web/ ./
 RUN npm run build:prod
 
 # ---------- 2) 编译后端（前端 embed 进单二进制；纯 Go sqlite，CGO=0 交叉编译） ----------
-FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS server
+# Go 构建镜像跟随最新 1.26.x 补丁版：修复 govulncheck 报告的 stdlib 漏洞
+# （crypto/x509、net/textproto、html/template、net/mail，均 go1.26.3/1.26.4 已修）
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS server
 WORKDIR /src
 RUN apk add --no-cache git
 COPY go.mod go.sum ./
@@ -34,12 +36,23 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build \
     -o /out/go-ldap-admin main.go
 
 # ---------- 3) 运行时（极简） ----------
+# 说明：进程经 entrypoint 的 su-exec 降权为非 root(app,uid 10001) 运行；不用顶层 USER 指令是为了让
+# entrypoint 先以 root 修正 bind mount 的 /app/data 属主再降权。trivy DS-0002 静态检查在此为误报，
+# 已在 .trivyignore 记录豁免。
 FROM alpine:3.20
 WORKDIR /app
-RUN apk add --no-cache ca-certificates tzdata && mkdir -p /app/data
+RUN apk add --no-cache ca-certificates tzdata su-exec && mkdir -p /app/data \
+    && addgroup -S -g 10001 app && adduser -S -u 10001 -G app app
 ENV TZ=Asia/Shanghai
 COPY --from=server /out/go-ldap-admin ./go-ldap-admin
-# 镜像内置一份默认 config.yml；正式部署建议用卷挂载覆盖（见 docker-compose.yml）
-COPY config.yml ./config.yml
+# 镜像内置一份【纯占位】的默认配置模板；正式部署务必用卷挂载覆盖或用环境变量注入真实配置/密钥
+# （见 docker-compose.yml 与 README）。绝不把含真实密钥的 config.yml 烤进镜像。
+COPY config.example.yml ./config.yml
+COPY deploy/docker/entrypoint.sh /entrypoint.sh
+RUN chown -R app:app /app && chmod +x /entrypoint.sh
+# 通过 entrypoint 以 root 入口先把挂载卷 /app/data 补正为 app 属主，再用 su-exec 降权为非 root 的
+# app(uid 10001) 运行主进程：既保留容器逃逸加固（进程实际非 root），又兼容 bind mount——避免非 root
+# 无法写入首次由 Docker 以 root 创建的挂载目录而导致 sqlite/日志/RSA 私钥写入失败、启动崩溃。
 EXPOSE 8888
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["./go-ldap-admin"]

@@ -91,7 +91,7 @@ func (s OperationLogService) Find(filter map[string]any, data *model.OperationLo
 // Exist 判断资源是否存在
 func (s OperationLogService) Exist(filter map[string]any) bool {
 	var dataObj model.OperationLog
-	err := common.DB.Debug().Order("created_at DESC").Where(filter).First(&dataObj).Error
+	err := common.DB.Order("created_at DESC").Where(filter).First(&dataObj).Error
 	return !errors.Is(err, gorm.ErrRecordNotFound)
 }
 

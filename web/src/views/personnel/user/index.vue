@@ -885,7 +885,7 @@ export default {
     },
 
     /** 导出当前页用户列表为 Excel */
-    exportUserList() {
+    async exportUserList() {
       this.exportLoading = true
       try {
         const header = ['用户名', '中文名', '花名', '状态', '邮箱', '手机号', '工号', '部门', '职位', '创建人', '说明', 'DN', '创建时间', '更新时间', '最后登录时间', '过期日']
@@ -908,7 +908,7 @@ export default {
           row.expireAt ? (typeof row.expireAt === 'string' ? row.expireAt.slice(0, 10) : row.expireAt) : ''
         ])
         const filename = `用户列表_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.xlsx`
-        export_json_to_excel({ header, data, filename, autoWidth: true, bookType: 'xlsx' })
+        await export_json_to_excel({ header, data, filename, autoWidth: true, bookType: 'xlsx' })
         Message.success('导出成功')
       } catch (e) {
         Message.error('导出失败：' + (e && e.message ? e.message : String(e)))

@@ -1,8 +1,9 @@
 package tools
 
 import (
+	crand "crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"strings"
 	"time"
 
@@ -79,8 +80,13 @@ func SendMail(sendto []string, pass string) error {
 
 // SendCode 发送验证码
 func SendCode(sendto []string) error {
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	vcode := fmt.Sprintf("%06v", rnd.Int31n(1000000))
+	// 使用密码学安全随机数生成验证码：原实现用 math/rand + 时间戳种子，验证码可被预测，
+	// 配合无鉴权的发码/改密接口存在重置码被猜解的风险。
+	n, err := crand.Int(crand.Reader, big.NewInt(1000000))
+	if err != nil {
+		return err
+	}
+	vcode := fmt.Sprintf("%06d", n.Int64())
 	// 把验证码信息放到cache，以便于验证时拿到
 	VerificationCodeCache.Set(sendto[0], vcode, time.Minute*5)
 	subject := "验证码-重置密码"

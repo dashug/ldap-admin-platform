@@ -10,7 +10,7 @@
 </template>
 
 <script>
-import pathToRegexp from 'path-to-regexp'
+import { compile } from 'path-to-regexp'
 
 export default {
   data() {
@@ -48,9 +48,13 @@ export default {
       return name.trim().toLocaleLowerCase() === 'Dashboard'.toLocaleLowerCase()
     },
     pathCompile(path) {
-      const { params } = this.$route
-      var toPath = pathToRegexp.compile(path)
-      return toPath(params)
+      // path-to-regexp v6+ 改为命名导出 compile；对无法编译的路径兜底返回原始 path
+      try {
+        const { params } = this.$route
+        return compile(path)(params)
+      } catch (e) {
+        return path
+      }
     },
     handleLink(item) {
       const { redirect, path } = item

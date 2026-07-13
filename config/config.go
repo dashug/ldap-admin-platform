@@ -1,7 +1,6 @@
 package config
 
 import (
-	_ "embed"
 	"fmt"
 	"os"
 	"strconv"
@@ -17,11 +16,13 @@ import (
 // 全局配置变量
 var Conf = new(config)
 
-//go:embed go-ldap-admin-priv.pem
-var priv []byte
-
-//go:embed go-ldap-admin-pub.pem
-var pub []byte
+// rsaPriv/rsaPub 保存运行期装载的登录加解密 RSA 密钥对（见 rsa_key.go: initRSAKeys）。
+// 旧版把私钥 go:embed 进二进制并提交进 git，导致所有部署共用同一把「公开」私钥；
+// 现改为运行期按 env/文件加载，缺失则自动生成一把独立密钥。
+var (
+	rsaPriv []byte
+	rsaPub  []byte
+)
 
 type config struct {
 	System   *SystemConfig `mapstructure:"system" json:"system"`
@@ -47,8 +48,15 @@ func InitConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yml")
 	viper.AddConfigPath(workDir + "/")
-	// 读取配置信息
+	// 读取配置信息；未找到 config.yml 时回退到内置模板 config.example.yml（便于首次运行/演示，
+	// 也让 config.yml 可以不入库——避免真实密钥被提交）
 	err = viper.ReadInConfig()
+	if err != nil {
+		viper.SetConfigName("config.example")
+		if err2 := viper.ReadInConfig(); err2 == nil {
+			err = nil
+		}
+	}
 
 	// 热更新配置
 	viper.WatchConfig()
@@ -57,9 +65,11 @@ func InitConfig() {
 		if err := viper.Unmarshal(Conf); err != nil {
 			panic(fmt.Errorf("初始化配置文件失败:%s", err))
 		}
-		// 读取rsa key
-		Conf.System.RSAPublicBytes = pub
-		Conf.System.RSAPrivateBytes = priv
+		// 回填运行期 RSA 密钥（viper.Unmarshal 会重建 Conf，需重新赋值）
+		Conf.System.RSAPublicBytes = rsaPub
+		Conf.System.RSAPrivateBytes = rsaPriv
+		// 热更新后重新应用环境变量覆盖，避免 env 注入的密钥被文件里的占位值静默回退
+		applyEnvOverrides()
 	})
 
 	if err != nil {
@@ -69,9 +79,10 @@ func InitConfig() {
 	if err := viper.Unmarshal(Conf); err != nil {
 		panic(fmt.Errorf("初始化配置文件失败:%s", err))
 	}
-	// 读取rsa key
-	Conf.System.RSAPublicBytes = pub
-	Conf.System.RSAPrivateBytes = priv
+	// 装载/生成运行期 RSA 密钥（不再依赖 go:embed 的仓库内私钥）
+	if err := initRSAKeys(); err != nil {
+		panic(fmt.Errorf("初始化 RSA 密钥失败:%s", err))
+	}
 
 	// 部分配合通过环境变量加载
 	dbDriver := os.Getenv("DB_DRIVER")
@@ -135,6 +146,44 @@ func InitConfig() {
 	ldapUserPasswordEncryptionType := os.Getenv("LDAP_USER_PASSWORD_ENCRYPTION_TYPE")
 	if ldapUserPasswordEncryptionType != "" {
 		Conf.Ldap.UserPasswordEncryptionType = ldapUserPasswordEncryptionType
+	}
+
+	// 安全/凭据相关配置支持环境变量注入，避免明文写入 config.yml 或被烤进镜像。
+	applyEnvOverrides()
+}
+
+// applyEnvOverrides 用环境变量覆盖安全/凭据相关配置项。
+// 在启动装载与 config.yml 热更新回调中都会调用，确保 env 注入的密钥不会被文件里的占位值回退覆盖。
+func applyEnvOverrides() {
+	if Conf.Jwt != nil {
+		applyEnvOverride(&Conf.Jwt.Key, "JWT_KEY")
+	}
+	if Conf.System != nil {
+		applyEnvOverride(&Conf.System.Mode, "SYSTEM_MODE")
+		applyEnvOverride(&Conf.System.WebhookSecret, "WEBHOOK_SECRET")
+	}
+	if Conf.FeiShu != nil {
+		applyEnvOverride(&Conf.FeiShu.AppID, "FEISHU_APP_ID")
+		applyEnvOverride(&Conf.FeiShu.AppSecret, "FEISHU_APP_SECRET")
+	}
+	if Conf.DingTalk != nil {
+		applyEnvOverride(&Conf.DingTalk.AppKey, "DINGTALK_APP_KEY")
+		applyEnvOverride(&Conf.DingTalk.AppSecret, "DINGTALK_APP_SECRET")
+	}
+	if Conf.WeCom != nil {
+		applyEnvOverride(&Conf.WeCom.CorpID, "WECOM_CORP_ID")
+		applyEnvOverride(&Conf.WeCom.CorpSecret, "WECOM_CORP_SECRET")
+	}
+	if Conf.Email != nil {
+		applyEnvOverride(&Conf.Email.User, "EMAIL_USER")
+		applyEnvOverride(&Conf.Email.Pass, "EMAIL_PASS")
+	}
+}
+
+// applyEnvOverride 若指定环境变量非空，则用其覆盖目标配置项。
+func applyEnvOverride(target *string, envKey string) {
+	if v := os.Getenv(envKey); v != "" {
+		*target = v
 	}
 }
 

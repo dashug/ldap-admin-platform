@@ -1,0 +1,94 @@
+# LDAP 管理平台配置模板（纯占位，供参考/镜像内置）。
+# 生产部署请复制为 config.yml 并填写真实值，或用环境变量注入敏感项（推荐，避免明文入库/入镜像）：
+#   JWT_KEY、LDAP_ADMIN_PASS、LDAP_URL、FEISHU_APP_ID/FEISHU_APP_SECRET、
+#   DINGTALK_APP_KEY/DINGTALK_APP_SECRET、WECOM_CORP_ID/WECOM_CORP_SECRET、
+#   EMAIL_USER/EMAIL_PASS、WEBHOOK_SECRET、RSA_PRIVATE_KEY(_FILE)、MYSQL_* 等。
+# 注意：release 模式下若 jwt.key 或 admin 密码仍为弱默认值，程序会拒绝启动（安全自检熔断）。
+database:
+  driver: sqlite3
+  source: data/go-ldap-admin.db
+system:
+  mode: debug            # 生产请改 release（并务必设置强 jwt.key 与 admin 密码，否则启动被阻断）
+  url-path-prefix: api
+  port: 8888
+  init-data: true
+  inactive-days: 0
+  webhook-url: ""
+  webhook-secret: ""     # 建议用环境变量 WEBHOOK_SECRET 注入
+  auto-sync-enabled: false
+  auto-sync-cron: 0 0 */6 * * *
+  allow-origins: []
+jwt:
+  realm: go-ldap-admin
+  key: please-change-me-to-a-random-32+bytes-secret   # 生产必须改；建议用 JWT_KEY 注入
+  timeout: 24           # 单位小时（原模板 12000≈500 天过长，建议缩短）
+  max-refresh: 168
+rate-limit:
+  fill-interval: 50
+  capacity: 200
+ldap:
+  directory-type: openldap
+  url: ldap://localhost:389
+  max-conn: 10
+  base-dn: dc=example,dc=com
+  admin-dn: cn=admin,dc=example,dc=com
+  admin-pass: "please-change-me"    # 生产必须改；建议用 LDAP_ADMIN_PASS 注入
+  user-dn: ou=people,dc=example,dc=com
+  user-init-password: "please-change-me"
+  default-email-suffix: example.com
+  group-name-modify: false
+  user-name-modify: false
+  user-password-encryption-type: ssha
+  enable-sync: false
+logs:
+  level: -1
+  path: data/logs
+  max-size: 50
+  max-backups: 100
+  max-age: 30
+  compress: false
+mysql:
+  host: localhost
+  port: 3306
+  username: root
+  password: "please-change-me"      # 建议用 MYSQL_PASSWORD 注入
+  database: go_ldap_admin
+  query: parseTime=True&loc=Local&timeout=10000ms
+  table-prefix: tb
+  charset: utf8mb4
+  collation: utf8mb4_general_ci
+  log-mode: true
+email:
+  host: smtp.example.com
+  port: "465"
+  user: example@example.com
+  pass: "your password"             # 建议用 EMAIL_PASS 注入
+  from: go-ldap-admin后台
+  send-user-creation-mail: false
+dingtalk:
+  flag: dingtalk
+  app-key: "xxxxxxx"
+  app-secret: "xxxxxxx"
+  agent-id: "12121212"
+  enable-sync: false
+  dept-sync-time: 0 30 2 * * *
+  user-sync-time: 0 30 3 * * *
+  is-update-syncd: false
+  user-leave-range: 0
+wecom:
+  flag: wecom
+  corp-id: "xxxxx"
+  corp-secret: "xxxxx"
+  agent-id: 1000003
+  enable-sync: false
+  dept-sync-time: 0 30 2 * * *
+  user-sync-time: 0 30 3 * * *
+  is-update-syncd: false
+feishu:
+  flag: feishu
+  app-id: "xxxxxxx"
+  app-secret: "xxxxxxxxxxx"
+  enable-sync: false
+  dept-sync-time: 0 20 0 * * *
+  user-sync-time: 0 40 0 * * *
+  is-update-syncd: false

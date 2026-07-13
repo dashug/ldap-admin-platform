@@ -119,14 +119,13 @@ func (d DingTalkLogic) SyncDingTalkUsers(c *gin.Context, req any) (data any, rsp
 		common.Log.Errorf("SyncDingTalkUsers: %s", errMsg)
 		return nil, tools.NewOperationError(errors.New(errMsg))
 	}
-	// 2.遍历用户，开始写入
+	// 2.遍历用户，开始写入（单个用户失败时跳过并继续，避免一条坏数据阻断整批同步）
+	var failedUsers int
 	for i, staff := range staffs {
-		// 入库
-		err = d.AddUsers(staff)
-		if err != nil {
-			errMsg := fmt.Sprintf("写入用户[%s]失败：%s", staff.Username, err.Error())
-			common.Log.Errorf("SyncDingTalkUsers: %s", errMsg)
-			return nil, tools.NewOperationError(errors.New(errMsg))
+		if err = d.AddUsers(staff); err != nil {
+			failedUsers++
+			common.Log.Errorf("SyncDingTalkUsers: 写入用户[%s]失败(跳过继续)：%s", staff.Username, err.Error())
+			continue
 		}
 		common.Log.Infof("SyncDingTalkUsers: 成功同步用户[%s] (%d/%d)", staff.Username, i+1, len(staffs))
 	}
@@ -145,41 +144,35 @@ func (d DingTalkLogic) SyncDingTalkUsers(c *gin.Context, req any) (data any, rsp
 		return nil, tools.NewOperationError(errors.New(errMsg))
 	}
 
-	// 4.遍历id，开始处理
+	// 4.遍历id，开始处理（单个失败时跳过并继续）
 	processedCount := 0
 	for _, uid := range userIds {
-		if isql.User.Exist(
-			tools.H{
-				"source_user_id": fmt.Sprintf("%s_%s", config.Conf.DingTalk.Flag, uid),
-				"status":         1, //只处理1在职的
-			}) {
-			user := new(model.User)
-			err = isql.User.Find(tools.H{"source_user_id": fmt.Sprintf("%s_%s", config.Conf.DingTalk.Flag, uid)}, user)
-			if err != nil {
-				errMsg := fmt.Sprintf("在MySQL查询离职用户[%s]失败: %s", uid, err.Error())
-				common.Log.Errorf("SyncDingTalkUsers: %s", errMsg)
-				return nil, tools.NewMySqlError(errors.New(errMsg))
-			}
-			// 先从ldap删除用户
-			err = ildap.User.Delete(user.UserDN)
-			if err != nil {
-				errMsg := fmt.Sprintf("在LDAP删除离职用户[%s]失败: %s", user.Username, err.Error())
-				common.Log.Errorf("SyncDingTalkUsers: %s", errMsg)
-				return nil, tools.NewLdapError(errors.New(errMsg))
-			}
-			// 然后更新MySQL中用户状态
-			err = isql.User.ChangeStatus(int(user.ID), 2)
-			if err != nil {
-				errMsg := fmt.Sprintf("在MySQL更新离职用户[%s]状态失败: %s", user.Username, err.Error())
-				common.Log.Errorf("SyncDingTalkUsers: %s", errMsg)
-				return nil, tools.NewMySqlError(errors.New(errMsg))
-			}
-			processedCount++
-			common.Log.Infof("SyncDingTalkUsers: 成功处理离职用户[%s]", user.Username)
+		if !isql.User.Exist(tools.H{
+			"source_user_id": fmt.Sprintf("%s_%s", config.Conf.DingTalk.Flag, uid),
+			"status":         1, //只处理1在职的
+		}) {
+			continue
 		}
+		user := new(model.User)
+		if err = isql.User.Find(tools.H{"source_user_id": fmt.Sprintf("%s_%s", config.Conf.DingTalk.Flag, uid)}, user); err != nil {
+			common.Log.Errorf("SyncDingTalkUsers: 查询离职用户[%s]失败(跳过): %s", uid, err.Error())
+			continue
+		}
+		// 先从ldap删除用户（LDAP 未连接时不阻断后续状态更新）
+		if err = ildap.User.Delete(user.UserDN); err != nil && !errors.Is(err, common.ErrLDAPDisabled) {
+			common.Log.Errorf("SyncDingTalkUsers: 在LDAP删除离职用户[%s]失败(跳过): %s", user.Username, err.Error())
+			continue
+		}
+		// 然后更新MySQL中用户状态为离职
+		if err = isql.User.ChangeStatus(int(user.ID), 2); err != nil {
+			common.Log.Errorf("SyncDingTalkUsers: 在MySQL更新离职用户[%s]状态失败(跳过): %s", user.Username, err.Error())
+			continue
+		}
+		processedCount++
+		common.Log.Infof("SyncDingTalkUsers: 成功处理离职用户[%s]", user.Username)
 	}
 
-	common.Log.Infof("SyncDingTalkUsers: 钉钉用户同步完成，共同步%d个在职用户，处理%d个离职用户", len(staffs), processedCount)
+	common.Log.Infof("SyncDingTalkUsers: 钉钉用户同步完成，共%d个用户(失败%d)，处理%d个离职用户", len(staffs), failedUsers, processedCount)
 	return nil, nil
 }
 

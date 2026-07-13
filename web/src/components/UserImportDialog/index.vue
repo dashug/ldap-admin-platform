@@ -5,7 +5,7 @@
       :closable="false"
       show-icon
       class="import-alert"
-      title="按模板填写后上传（支持 .xlsx / .xls / .csv）。用户名、中文名、邮箱、工号为必填；手机号留空会自动生成。导入用户默认角色为「普通用户」，初始密码为目录配置中的默认密码，可后续编辑分配部门。"
+      title="按模板填写后上传（支持 .xlsx / .csv）。用户名、中文名、邮箱、工号为必填；手机号留空会自动生成。导入用户默认角色为「普通用户」，初始密码为目录配置中的默认密码，可后续编辑分配部门。"
     />
 
     <div class="import-toolbar">
@@ -15,7 +15,7 @@
         :auto-upload="false"
         :show-file-list="false"
         :on-change="handleFile"
-        accept=".xlsx,.xls,.csv"
+        accept=".xlsx,.csv"
       >
         <el-button size="small" type="primary" icon="Upload">选择文件</el-button>
       </el-upload>
@@ -56,7 +56,7 @@
 </template>
 
 <script>
-import XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 import { batchImportUsers } from '@/api/system/base'
 import { ElMessage as Message } from 'element-plus'
@@ -102,25 +102,33 @@ export default {
       this.checking = false
       this.importing = false
     },
-    downloadTemplate() {
+    async downloadTemplate() {
       const headers = ['用户名', '中文名', '花名', '邮箱', '手机号', '工号', '职位']
       const example = ['zhangsan', '张三', '三哥', 'zhangsan@example.com', '13800138000', '1001', '工程师']
-      const ws = XLSX.utils.aoa_to_sheet([headers, example])
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'users')
-      const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
-      saveAs(new Blob([out], { type: 'application/octet-stream' }), '用户导入模板.xlsx')
+      const wb = new ExcelJS.Workbook()
+      const ws = wb.addWorksheet('users')
+      ws.addRow(headers)
+      ws.addRow(example)
+      const buf = await wb.xlsx.writeBuffer()
+      saveAs(new Blob([buf], { type: 'application/octet-stream' }), '用户导入模板.xlsx')
     },
     handleFile(file) {
       const raw = file.raw || file
       this.fileName = file.name || ''
       this.result = null
+      const name = (this.fileName || '').toLowerCase()
       const reader = new FileReader()
-      reader.onload = e => {
+      reader.onload = async e => {
         try {
-          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' })
-          const ws = wb.Sheets[wb.SheetNames[0]]
-          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' })
+          let rows
+          if (name.endsWith('.csv')) {
+            rows = this.parseCsv(new TextDecoder('utf-8').decode(e.target.result))
+          } else if (name.endsWith('.xlsx')) {
+            rows = await this.parseXlsx(e.target.result)
+          } else {
+            Message.error('仅支持 .xlsx 或 .csv 文件（旧版 .xls 请先另存为 .xlsx）')
+            return
+          }
           this.users = this.parseRows(rows)
           if (!this.users.length) Message.warning('未解析到有效数据行')
         } catch (err) {
@@ -128,6 +136,65 @@ export default {
         }
       }
       reader.readAsArrayBuffer(raw)
+    },
+    // 用 exceljs 读取 .xlsx，转成「行数组的数组」（与旧 sheet_to_json({header:1}) 等价）
+    async parseXlsx(arrayBuffer) {
+      const wb = new ExcelJS.Workbook()
+      await wb.xlsx.load(arrayBuffer)
+      const ws = wb.worksheets[0]
+      const rows = []
+      if (ws) {
+        ws.eachRow((row) => {
+          const vals = row.values // 1-indexed，下标 0 为空
+          const arr = []
+          for (let i = 1; i < vals.length; i++) arr.push(this.cellText(vals[i]))
+          rows.push(arr)
+        })
+      }
+      return rows
+    },
+    // 提取单元格显示文本（兼容富文本 / 超链接 / 公式结果 / 日期）
+    cellText(v) {
+      if (v == null) return ''
+      if (typeof v === 'object') {
+        if (v instanceof Date) return v.toISOString()
+        if (v.text != null) return String(v.text)
+        if (v.result != null) return String(v.result)
+        if (Array.isArray(v.richText)) return v.richText.map(t => t.text).join('')
+        return String(v)
+      }
+      return String(v)
+    },
+    // 简易 CSV 解析（支持双引号包裹与 "" 转义），去除 BOM
+    parseCsv(text) {
+      const rows = []
+      const lines = text.replace(/^﻿/, '').split(/\r\n|\n|\r/)
+      for (const line of lines) {
+        if (line === '') continue
+        rows.push(this.splitCsvLine(line))
+      }
+      return rows
+    },
+    splitCsvLine(line) {
+      const out = []
+      let cur = ''
+      let inQ = false
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i]
+        if (inQ) {
+          if (ch === '"') {
+            if (line[i + 1] === '"') { cur += '"'; i++ } else { inQ = false }
+          } else cur += ch
+        } else if (ch === '"') {
+          inQ = true
+        } else if (ch === ',') {
+          out.push(cur); cur = ''
+        } else {
+          cur += ch
+        }
+      }
+      out.push(cur)
+      return out
     },
     parseRows(rows) {
       if (!rows || rows.length < 2) return []

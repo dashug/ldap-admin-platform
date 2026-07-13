@@ -176,6 +176,9 @@ func (l GroupLogic) Update(c *gin.Context, req any) (data any, rspError any) {
 		newGroup.GroupName = oldGroup.GroupName
 	}
 
+	// 默认沿用旧 DN；确保写库前 GroupDN 已确定，避免 GORM 忽略零值导致 DN 不落库/错位
+	// （原实现在 isql.Update 之后才赋值，GroupDN 始终以零值写库，改名场景会与 LDAP 侧不一致）
+	newGroup.GroupDN = oldGroup.GroupDN
 	err = ildap.Group.Update(oldGroup, &newGroup)
 	if err != nil {
 		return nil, tools.NewLdapError(fmt.Errorf("%s", "向LDAP更新分组失败："+err.Error()))
@@ -184,7 +187,6 @@ func (l GroupLogic) Update(c *gin.Context, req any) (data any, rspError any) {
 	if err != nil {
 		return nil, tools.NewLdapError(fmt.Errorf("向MySQL更新分组失败"))
 	}
-	newGroup.GroupDN = oldGroup.GroupDN
 	common.SendWebhook(common.EventGroupUpdated, common.GroupWebhookData{ID: newGroup.ID, GroupName: newGroup.GroupName, GroupDN: newGroup.GroupDN, Remark: newGroup.Remark})
 	return nil, nil
 }
@@ -282,9 +284,9 @@ func (l GroupLogic) AddUser(c *gin.Context, req any) (data any, rspError any) {
 			return nil, tools.NewMySqlError(err)
 		}
 		newData := oldData
-		// 添加新增的分组ID与部门
-		newData.DepartmentId = oldData.DepartmentId + "," + strconv.Itoa(int(r.GroupID))
-		newData.Departments = oldData.Departments + "," + group.GroupName
+		// 追加新增的分组ID与部门名，自动去空段与重复项（原实现直接字符串拼接会产生前导逗号/重复项）
+		newData.DepartmentId = appendCSV(oldData.DepartmentId, strconv.Itoa(int(r.GroupID)))
+		newData.Departments = appendCSV(oldData.Departments, group.GroupName)
 		err = l.updataUser(newData)
 		if err != nil {
 			return nil, tools.NewOperationError(fmt.Errorf("%s", "处理用户的部门数据失败:"+err.Error()))
@@ -300,6 +302,25 @@ func (l GroupLogic) updataUser(newUser *model.User) error {
 		return tools.NewMySqlError(fmt.Errorf("%s", "在MySQL更新用户失败："+err.Error()))
 	}
 	return nil
+}
+
+// appendCSV 向逗号分隔字符串追加一个值，自动去空段与重复项。
+func appendCSV(csv, val string) string {
+	val = strings.TrimSpace(val)
+	seen := make(map[string]bool)
+	out := make([]string, 0)
+	for _, v := range strings.Split(csv, ",") {
+		v = strings.TrimSpace(v)
+		if v == "" || seen[v] {
+			continue
+		}
+		seen[v] = true
+		out = append(out, v)
+	}
+	if val != "" && !seen[val] {
+		out = append(out, val)
+	}
+	return strings.Join(out, ",")
 }
 
 // RemoveUser 移除用户
